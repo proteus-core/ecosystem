@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import vcdvcd
+import pywellen
 from types import SimpleNamespace
 import re
 import sys
+import inspect
+
 
 class NestedNamespace(SimpleNamespace):
-
   def __init__(self, dictionary, **kwargs):
-
     super().__init__(**kwargs)
 
     for key, value in dictionary.items():
@@ -18,14 +18,11 @@ class NestedNamespace(SimpleNamespace):
         self.__setattr__(key, value)
 
 
-#############################################################################
-class ProteusVCD:
-
-  ###########################################################################
+class ProteusWaveform:
   def __init__(self, vcdname, signals=[]):
-    # Build the signal namespace
-    self.vcd = vcdvcd.VCDVCD(vcdname, only_sigs=True)
-    self.TOP = self.build_signal_namespace()
+    self.waveform = pywellen.Waveform(vcdname)
+        
+    self.TOP = self.build_signal_namespace().TOP
     self.PL  = self.TOP.Core.pipeline
     self.ID  = self.TOP.Core.pipeline.decode
     try:
@@ -37,33 +34,32 @@ class ProteusVCD:
     self.RF  = self.TOP.Core.pipeline.RegisterFileAccessor
     self.CSR = self.TOP.Core.pipeline.CsrFile
 
-    # Load the data for the signals we are interested in.
-    # The empty list selects all signals.
-    self.vcd = vcdvcd.VCDVCD(vcdname, signals)
-    if len(signals) > 0:
-      assert set(signals) == set(self.vcd.signals), "Missing signals"
+  def build_signal_namespace(self, scope = None):
+    hier = self.waveform.hierarchy
+    scopes = scope.scopes(hier) if scope is not None else hier.top_scopes()
 
-  ###########################################################################
-  def build_signal_namespace(self):
-    signal_dict = {}
-    d = signal_dict
-    for l in [x.split(".") for x in self.vcd.signals]:
-      d = signal_dict
-      for component in l[1:-1]:
-        if not component in d:
-          d[component] = {}
-        d = d[component]
-      n = re.sub(r'\[.*\]', '', l[-1])
-      d[n] = '.'.join(l)
-    return NestedNamespace(signal_dict)
+    d = {}
+    if scope:
+      vars = scope.vars(hier)
 
-  ###########################################################################
+      for var in vars:
+        d[var.name(hier)] = var
+
+    for scope in scopes:
+      d[scope.name(hier)] = self.build_signal_namespace(scope)
+    
+    return NestedNamespace(d)
+
   def get_sequence(self):
-
     seq = []
 
-    signal = self.PL.clk
-    for t, v in [(t, int(v, 2)) for (t, v) in self.vcd[signal].tv]:
+    for t, v in [(t, v) for (t, v) in self.signal(self.PL.clk).all_changes()]:
+      print(v)
+      try:
+        v = int(v, 2)
+      except:
+        continue
+      
       if v == 1:
         is_done = self.as_int(self.WB.arbitration_isDone, t) == 1
         if is_done:
@@ -82,19 +78,16 @@ class ProteusVCD:
 
     return seq
 
-
-  ###########################################################################
   def signal(self, name):
-    return self.vcd[name]
+    return self.waveform.get_signal(name)
 
-  ###########################################################################
   def as_int(self, signal, time):
-    return int(self.vcd[signal][time], 2)
+    return int(self.signal(signal).value_at_time(time), 2)
 
 
 
-zero = ProteusVCD(sys.argv[1])
-good = ProteusVCD(sys.argv[2])
+zero = ProteusWaveform(sys.argv[1])
+good = ProteusWaveform(sys.argv[2])
 
 zero_s = zero.get_sequence()
 good_s = good.get_sequence()
