@@ -1,0 +1,9 @@
+*.a
+*.o
+.kdev4/
+*.kdev4
+*.swp
+*.elf
+*.bin
+*.ihex
+*~

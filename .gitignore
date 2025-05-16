@@ -1,0 +1,8 @@
+*.bin
+*.ihex
+*.objdump
+*.elf
+*.vcd
+*.fst
+*.o
+*.fst.hier

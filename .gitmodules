@@ -1,0 +1,6 @@
+[submodule "formal-verification/riscv-formal/riscv-formal"]
+	path = formal-verification/riscv-formal/riscv-formal
+	url = https://github.com/YosysHQ/riscv-formal.git
+[submodule "functional-tests/riscv-tests"]
+	path = functional-tests/riscv-tests
+	url = https://github.com/riscv-software-src/riscv-tests.git
