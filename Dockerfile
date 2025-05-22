@@ -7,7 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Basic dependencies
 ################################################################################
 
-RUN apt-get update && apt-get -yqq install build-essential git openjdk-17-jdk verilator libz-dev gcc-riscv64-unknown-elf
+RUN apt-get update && apt-get -yqq install build-essential git openjdk-17-jdk verilator libz-dev gcc-riscv64-unknown-elf python3-pip python3-venv
 
 ################################################################################
 # Install scala and sbt (https://www.scala-sbt.org/)
@@ -31,7 +31,9 @@ COPY . .
 RUN git clone https://github.com/proteus-core/proteus.git core
 RUN make -C simulation clean
 RUN make -C simulation CORE=riscv.CoreDynamicExtMem
-RUN make -C functional-tests BUILD_CORE=0 RISCV_PREFIX=riscv64-unknown-elf
+RUN make -C functional-tests CORE=riscv.CoreDynamicExtMem BUILD_CORE=0 RISCV_PREFIX=riscv64-unknown-elf  # currently BUILD_CORE=0 seems to not have an effect
 
+WORKDIR /proteus/waveform-analysis
+RUN python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 CMD /bin/bash

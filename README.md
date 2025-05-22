@@ -20,8 +20,8 @@ We use a Verilator-based simulation flow.
 The possible options for this simulation should be extended and documented better.
 It currently supports the following options:
 - `CORE=...`: specify which configuration to build.
-- `-DLOG_STORES_ENABLED`: enable logging stores on stderr.
-- `-DTRACE_DUMP_ENABLED`: enable waveform dumping in FST format.
+- `EXTRA_CFLAGS="-DLOG_STORES_ENABLED"`: enable logging stores on stderr.
+- `EXTRA_CFLAGS="-DTRACE_DUMP_ENABLED"`: enable waveform dumping in FST format.
 
 ## Newlib
 
