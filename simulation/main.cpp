@@ -7,6 +7,7 @@
 #include <atomic>
 #include <memory>
 #include <vector>
+#include <iomanip>
 #include <iostream>
 #include <fstream>
 
@@ -26,17 +27,7 @@ const std::uint64_t MAX_CYCLES = 1000000000ULL;
 const unsigned int MEMBUS_WORDS = 4;
 const unsigned int MEMBUS_OFFSET = 2 + std::bit_width(MEMBUS_WORDS) - 1;
 
-#ifdef LOG_STORES_ENABLED
-const bool log_stores = true;
-#else
-const bool log_stores = false;
-#endif
-
-#ifdef TRACE_DUMP_ENABLED
-const bool trace_dump = true;
-#else
-const bool trace_dump = false;
-#endif
+bool logStores = false;
 
 std::atomic<bool> isDone{false};
 
@@ -113,6 +104,20 @@ public:
         }
     }
 
+    void dump(const std::string &out) {
+        std::ofstream memfile(out, std::ios::out | std::ios::binary);
+        for (int i = 0; i < memory_.size(); ++i) {
+            uint32_t word = memory_[i];
+
+            memfile.put(word & 0xFF);
+            memfile.put((word >> 8) & 0xFF);
+            memfile.put((word >> 16) & 0xFF);
+            memfile.put((word >> 24) & 0xFF);
+        }
+
+        memfile.close();
+    }
+
 private:
 
     using Address = std::uint32_t;
@@ -150,7 +155,7 @@ private:
                 auto& memoryValue = memory_[baseAddress + i];
                 memoryValue &= ~bitMask;
                 memoryValue |= value[i] & bitMask;
-                if (log_stores) {
+                if (logStores) {
                     std::cerr << std::hex << "Store at " << baseAddress << " with value " << value[i] << std::endl;
                 }
             }
@@ -313,6 +318,24 @@ private:
     bool hasStdinByte = false;
 };
 
+bool getArg(int argc, char** argv, const std::string& arg, std::string* value = nullptr) {
+    for (int i = 1; i < argc; ++i) {
+        std::string a = argv[i];
+
+        if (a == "--" + arg && i + 1 < argc) {
+            if (value) {
+                if (i + 1 < argc) {
+                    *value = argv[i + 1];
+                    return true;
+                }
+            } else {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 int main(int argc, char** argv)
 {
     assert(argc >= 2 && "No memory file name given");
@@ -331,10 +354,27 @@ int main(int argc, char** argv)
     auto testDev = TestDev{*top};
     auto byteDev = ByteDev{*top};
 
-    Verilated::traceEverOn(true);
+    if (getArg(argc, argv, "help")) {
+        std::cout << "--dump-fst <filename>\tDump trace to <filename>\n";
+        std::cout << "--dump-mem <filename>\tDump memory to <filename>\n";
+        std::cout << "--log-stores\tLog stores to standard output\n";
+        std::cout << "--help\tShow command line help\n";
+        return 0;
+    }
+
+    logStores = getArg(argc, argv, "log-stores");
+
     auto tracer = std::unique_ptr<VerilatedFstC>{new VerilatedFstC};
-    top->trace(tracer.get(), 99);
-    tracer->open("sim.fst");
+    std::string fstFile;
+    bool traceDump = false;
+    if ((traceDump = getArg(argc, argv, "dump-fst", &fstFile))) {
+        Verilated::traceEverOn(true);
+        top->trace(tracer.get(), 99);
+        tracer->open(fstFile.c_str());
+    }
+
+    std::string memDumpFile;
+    bool memDump = getArg(argc, argv, "dump-mem", &memDumpFile);
 
     vluint64_t mainTime = 0;
     vluint64_t cycle = 0;
@@ -390,13 +430,17 @@ int main(int argc, char** argv)
             }
         }
 
-        if (trace_dump) {
+        if (traceDump) {
             tracer->dump(mainTime);
         }
 
         mainTime++;
     }
 
-    tracer->close();
+    if (memDump)
+        memory.dump(memDumpFile);
+
+    if (traceDump)
+        tracer->close();
     return result;
 }
