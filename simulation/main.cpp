@@ -28,6 +28,7 @@ const unsigned int MEMBUS_WORDS = 4;
 const unsigned int MEMBUS_OFFSET = 2 + std::bit_width(MEMBUS_WORDS) - 1;
 
 bool logStores = false;
+std::ofstream storesLog;
 
 std::atomic<bool> isDone{false};
 
@@ -156,7 +157,7 @@ private:
                 memoryValue &= ~bitMask;
                 memoryValue |= value[i] & bitMask;
                 if (logStores) {
-                    std::cerr << std::hex << "Store at " << baseAddress << " with value " << value[i] << std::endl;
+                    storesLog << std::hex << "Store at " << baseAddress << " with value " << value[i] << std::endl;
                 }
             }
         }
@@ -357,12 +358,15 @@ int main(int argc, char** argv)
     if (getArg(argc, argv, "help")) {
         std::cout << "--dump-fst <filename>\tDump trace to <filename>\n";
         std::cout << "--dump-mem <filename>\tDump memory to <filename>\n";
-        std::cout << "--log-stores\tLog stores to standard output\n";
+        std::cout << "--log-stores <filename> \tLog stores to <filename>\n";
         std::cout << "--help\tShow command line help\n";
         return 0;
     }
 
-    logStores = getArg(argc, argv, "log-stores");
+    std::string storesLogFile;
+    logStores = getArg(argc, argv, "log-stores", &storesLogFile);
+    if (logStores)
+        storesLog = std::ofstream(storesLogFile);
 
     auto tracer = std::unique_ptr<VerilatedFstC>{new VerilatedFstC};
     std::string fstFile;
