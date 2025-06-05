@@ -4,7 +4,7 @@
 #include <verilated_fst_c.h>
 
 #include <bit>
-
+#include <atomic>
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <cassert>
+#include <csignal>
 
 #include <sys/select.h>
 #include <sys/time.h>
@@ -36,6 +37,15 @@ const bool trace_dump = true;
 #else
 const bool trace_dump = false;
 #endif
+
+std::atomic<bool> isDone{false};
+
+void handle_sigint(int signal)
+{
+    if (signal == SIGINT) {
+        isDone = true;
+    }
+}
 
 class Memory
 {
@@ -309,6 +319,8 @@ int main(int argc, char** argv)
 
     Verilated::commandArgs(argc, argv);
 
+    std::signal(SIGINT, handle_sigint);
+
     auto top = std::unique_ptr<VCore>{new VCore};
     top->reset = 1;
     top->clk = 1;
@@ -326,7 +338,6 @@ int main(int argc, char** argv)
 
     vluint64_t mainTime = 0;
     vluint64_t cycle = 0;
-    auto isDone = false;
     int result = 0;
 
     while (!isDone)
