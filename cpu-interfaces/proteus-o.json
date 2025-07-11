@@ -1,0 +1,13 @@
+{
+    "clk": "TOP.Core.pipeline.clk",
+    "instruction_stream": {
+        "path": "TOP.Core.pipeline.retirementStage",
+        "active": "arbitration_isDone",
+        "pc": "in_PC",
+        "rd_value": "in_RD_DATA",
+        "rd": "in_RD",
+        "rs1_value": "in_RS1_DATA",
+        "rs2_value": "in_RS2_DATA",
+        "mem_address": "in_LSU_TARGET_ADDRESS"
+    }
+}

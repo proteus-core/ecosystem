@@ -3,6 +3,9 @@
 import pywellen
 from types import SimpleNamespace
 import sys
+import json
+import os
+from operator import attrgetter
 
 
 class NestedNamespace(SimpleNamespace):
@@ -17,20 +20,17 @@ class NestedNamespace(SimpleNamespace):
 
 
 class ProteusWaveform:
-    def __init__(self, vcdname, signals=[]):
+    def __init__(self, vcdname, description):
         self.waveform = pywellen.Waveform(vcdname)
 
-        self.TOP = self.build_signal_namespace().TOP
-        self.PL = self.TOP.Core.pipeline
-        self.ID = self.TOP.Core.pipeline.decode
-        try:
-            self.WB = self.TOP.Core.pipeline.writeback
-            self.is_static = True
-        except:
-            self.WB = self.TOP.Core.pipeline.retirementStage
-            self.is_static = False
-        self.RF = self.TOP.Core.pipeline.RegisterFileAccessor
-        self.CSR = self.TOP.Core.pipeline.CsrFile
+        with open(description, 'r') as f:
+            self.description = json.load(f)
+
+        #  get_signal_from_path instead of the hierarchy?
+
+        self.namespace = self.build_signal_namespace()
+        self.clk = attrgetter(self.description['clk'])(self.namespace)
+        self.retirement = attrgetter(self.description['instruction_stream']['path'])(self.namespace)
 
     def build_signal_namespace(self, scope=None):
         hier = self.waveform.hierarchy
@@ -51,21 +51,24 @@ class ProteusWaveform:
     def get_sequence(self):
         seq = []
 
-        for t, v in [(t, v) for (t, v) in self.signal(self.PL.clk).all_changes()]:
+        active = attrgetter(self.description['instruction_stream']['active'])(self.retirement)
+        pc = attrgetter(self.description['instruction_stream']['pc'])(self.retirement)
+
+        rd_value = attrgetter(self.description['instruction_stream']['rd_value'])(self.retirement)
+        mem_address = attrgetter(self.description['instruction_stream']['mem_address'])(self.retirement)
+        rs1_data = attrgetter(self.description['instruction_stream']['rs1_value'])(self.retirement)
+        rs2_data = attrgetter(self.description['instruction_stream']['rs2_value'])(self.retirement)
+
+        for t, v in [(t, v) for (t, v) in self.signal(self.clk).all_changes()]:
             if v == 1:
-                is_done = self.as_int(self.WB.arbitration_isDone, t) == 1
+                is_done = self.as_int(active, t) == 1
                 if is_done:
-                    pc = self.as_int(self.WB.in_PC, t)
-                    value = self.as_int(self.WB.in_RD_DATA, t)
-                    reg = self.as_int(self.WB.in_RD_TYPE, t)
-                    if not self.is_static:
-                        addr = self.as_int(self.WB.in_LSU_TARGET_ADDRESS, t)
-                        rs2 = self.as_int(self.WB.in_RS2_DATA, t)
-                    else:
-                        addr = 0
-                        rs2 = 0
-                    rs1 = self.as_int(self.WB.in_RS1_DATA, t)
-                    seq.append((pc, value, reg, addr, rs1, rs2, t))
+                    pc_v = self.as_int(pc, t)
+                    value = self.as_int(rd_value, t)
+                    addr = self.as_int(mem_address, t)
+                    rs2 = self.as_int(rs2_data, t)
+                    rs1 = self.as_int(rs1_data, t)
+                    seq.append((pc_v, value, addr, rs1, rs2, t))
 
         return seq
 
@@ -75,19 +78,20 @@ class ProteusWaveform:
     def as_int(self, signal, time):
         return self.signal(signal).value_at_time(time)
 
+dirname = os.path.dirname(__file__)
+proteus_description = os.path.join(dirname, "../cpu-interfaces/proteus-o.json")
 
-zero = ProteusWaveform(sys.argv[1])
-good = ProteusWaveform(sys.argv[2])
+zero = ProteusWaveform(sys.argv[1], proteus_description)
+good = ProteusWaveform(sys.argv[2], proteus_description)
 
 zero_s = zero.get_sequence()
 good_s = good.get_sequence()
 
-for (idx, (pc, val, reg, addr, rs1, rs2, t)) in enumerate(zero_s):
-    (pc64, val64, reg64, addr64, rs164, rs264, t64) = good_s[idx]
-    if pc != pc64 or val != val64 or reg != reg64 or rs2 != rs264 or rs1 != rs164:
+for (idx, (pc, val, addr, rs1, rs2, t)) in enumerate(zero_s):
+    (pc64, val64, addr64, rs164, rs264, t64) = good_s[idx]
+    if pc != pc64 or val != val64 or addr != addr64 or rs2 != rs264 or rs1 != rs164:
         print("PC:", pc, pc64)
         print("RD_VALUE:", val, val64)
-        print("RD_TYPE:", reg, reg64)
         print("LSU_ADDR:", addr, addr64)
         print("RS1_DATA:", rs1, rs164)
         print("RS2_DATA:", rs2, rs264)
