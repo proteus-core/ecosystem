@@ -1,0 +1,17 @@
+{
+  "file_path": "./sim-bad.vcd",
+  "clk_signal": "TOP.Core.clk",
+  "signals": [
+    {
+      "name": "TOP.Core.pipeline.cache_dbus_cacheHits",
+      "color": "red",
+      "label": "hits",
+      "type": "hex"
+    },
+    {
+        "name": "TOP.Core.pipeline.BranchTargetPredictor.result_valid",
+        "color": "green",
+        "label": "btb valid"
+    }
+  ]
+}
