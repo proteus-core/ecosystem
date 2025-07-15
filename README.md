@@ -48,7 +48,7 @@ Once the simulation binary is built, the options can be consulted by calling `--
 The last argument passed to the simulator needs to be the binary file.
 Currently, the `--help` command only works if a binary is provided.
 
-## Newlib
+## Newlib board support package
 
 Our board support package with standard library functions.
 
