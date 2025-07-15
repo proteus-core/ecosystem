@@ -31,11 +31,22 @@ $ docker run -it ecosystem
 ## Simulation
 
 We use a Verilator-based simulation flow.
-The possible options for this simulation should be extended and documented better.
-It currently supports the following options:
+`make -C simulation` from the root directory of the container.
+
 - `CORE=...`: specify which configuration to build.
-- `EXTRA_CFLAGS="-DLOG_STORES_ENABLED"`: enable logging stores on stderr.
-- `EXTRA_CFLAGS="-DTRACE_DUMP_ENABLED"`: enable waveform dumping in FST format.
+
+
+Once the simulation binary is built, the options can be consulted by calling `--help` on it.
+
+```
+--dump-fst <filename>    Dump trace to <filename>
+--dump-mem <filename>    Dump memory to <filename>
+--log-stores <filename>  Log stores to <filename>
+--help                   Show command line help
+```
+
+The last argument passed to the simulator needs to be the binary file.
+Currently, the `--help` command only works if a binary is provided.
 
 ## Newlib
 
