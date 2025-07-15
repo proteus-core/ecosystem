@@ -14,6 +14,20 @@ You can build the image with the following command:
 $ docker build -t ecosystem .
 ```
 
+Additional build arguments can be added with the `--build-arg FLAG_NAME=true` argument, for example `INSTALL_TOOLCHAIN` to install the RISC-V GNU toolchain and `INSTALL_PROTEUS` to clone and install the Proteus core inside the container (instead of mounting it as a volume).
+
+```shell
+$ docker build -t ecosystem . --build-arg INSTALL_PROTEUS=true
+```
+
+You can launch a container after building:
+
+```shell
+$ docker run -it ecosystem
+```
+
+(optionally attaching the Proteus core directory as a volume):
+
 ## Simulation
 
 We use a Verilator-based simulation flow.

@@ -1,13 +1,35 @@
 {
     "clk": "TOP.Core.pipeline.clk",
     "instruction_stream": {
-        "path": "TOP.Core.pipeline.retirementStage",
-        "active": "arbitration_isDone",
-        "pc": "in_PC",
-        "rd_value": "in_RD_DATA",
-        "rd": "in_RD",
-        "rs1_value": "in_RS1_DATA",
-        "rs2_value": "in_RS2_DATA",
-        "mem_address": "in_LSU_TARGET_ADDRESS"
+        "active": "TOP.Core.pipeline.retirementStage.arbitration_isDone",
+        "pc": "TOP.Core.pipeline.retirementStage.in_PC",
+        "rd_value": "TOP.Core.pipeline.retirementStage.in_RD_DATA",
+        "rd": "TOP.Core.pipeline.retirementStage.in_RD",
+        "rs1_value": "TOP.Core.pipeline.retirementStage.in_RS1_DATA",
+        "rs2_value": "TOP.Core.pipeline.retirementStage.in_RS2_DATA",
+        "mem_address": "TOP.Core.pipeline.retirementStage.in_LSU_TARGET_ADDRESS"
+    },
+    "performance_counters": {
+        "final_count": [
+            "TOP.Core.pipeline.BranchTargetPredictor_mispredictionCount",
+            "TOP.Core.pipeline.BranchTargetPredictor_predictionCount",
+            "TOP.Core.pipeline.Scheduler_rob_ssbMispredictions",
+            "TOP.Core.pipeline.Scheduler_rob_ssbPredictions",
+            "TOP.Core.pipeline.Scheduler_rob_psfMispredictions",
+            "TOP.Core.pipeline.Scheduler_rob_psfPredictions",
+            "TOP.Core.pipeline.cache_dbus_cacheHits",
+            "TOP.Core.pipeline.cache_dbus_cacheMisses",
+            "TOP.Core.pipeline.cache_ibus_cacheHits",
+            "TOP.Core.pipeline.cache_ibus_cacheMisses",
+            "TOP.Core.pipeline.CsrFile.CsrFile_instret"
+        ],
+        "percentage_high": [
+            "TOP.Core.pipeline.Scheduler_rob_isFull",
+            "TOP.Core.pipeline.decode.arbitration_isStalled",
+            "TOP.Core.pipeline.Scheduler_dispatcher_activeFlush",
+            "TOP.Core.pipeline.Scheduler_RS_EX_ALU0_isAvailable",
+            "TOP.Core.pipeline.Scheduler_RS_EX_MUL0_isAvailable",
+            "TOP.Core.pipeline.Scheduler_LM_LOAD0_isAvailable"
+        ]
     }
 }
