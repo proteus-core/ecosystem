@@ -10,19 +10,20 @@ We could even include a Visual Studio Code setup for an out-of-the-box developme
 
 You can build the image with the following command:
 
-```shell
+```shell-session
 $ docker build -t ecosystem .
 ```
 
-Additional build arguments can be added with the `--build-arg FLAG_NAME=true` argument, for example `INSTALL_TOOLCHAIN` to install the RISC-V GNU toolchain and `INSTALL_PROTEUS` to clone and install the Proteus core inside the container (instead of mounting it as a volume).
+Additional build arguments can be added with the `--build-arg FLAG_NAME=true` argument, for example `INSTALL_TOOLCHAIN` to install the RISC-V GNU toolchain, `INSTALL_EVAL_HD` to install the hardware cost evaluation tool and `INSTALL_PROTEUS` to clone and install the Proteus core inside the container (instead of mounting it as a volume).
+Note that installing these extra tools will add a substantial amount of time to the build process (should quantify it later).
 
-```shell
-$ docker build -t ecosystem . --build-arg INSTALL_PROTEUS=true
+```shell-session
+$ docker build -t ecosystem . --build-arg INSTALL_PROTEUS=true --build-arg INSTALL_EVAL_HD=true
 ```
 
 You can launch a container after building:
 
-```shell
+```shell-session
 $ docker run -it ecosystem
 ```
 
