@@ -1,0 +1,121 @@
+EVAL_DIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+BASE_DIR = $(abspath $(EVAL_DIR)/..)
+SIM_DIR = $(BASE_DIR)/proteus/sim
+SIM_EXE = $(SIM_DIR)/build/sim
+GTKW_DIR = $(EVAL_DIR)gtkw
+CORE ?= riscv.CoreExtMem
+BUILD_CORE ?= 1
+USECLANG ?= 1
+EXPERIMENT ?= LEGACY
+BOOT ?= 0
+BUILD_DIR ?= ./
+
+PYTHON = python3
+GTKW = gtkwave
+
+EVALUATE = $(PYTHON) $(EVAL_DIR)evaluate.py
+
+OPTLEVEL ?= 3
+COMMONCFLAGS =
+COMMONCFLAGS += -I$(EVAL_DIR)
+COMMONCFLAGS += -nostdlib
+COMMONCFLAGS += -O$(OPTLEVEL)
+COMMONCFLAGS += -x assembler-with-cpp
+
+TOOLCHAIN_DIR = $(BASE_DIR)/llvm-project/install/bin
+CLANG = $(TOOLCHAIN_DIR)/clang
+LLD = $(TOOLCHAIN_DIR)/ld.lld
+OBJDUMP = $(TOOLCHAIN_DIR)/llvm-objdump
+
+CLANGFLAGS =
+CLANGFLAGS += $(COMMONCFLAGS)
+CLANGFLAGS += --target=riscv32
+CLANGFLAGS += -march=rv32im
+
+RISCV_PREFIX ?= riscv32-unknown-linux-gnu
+OBJCOPY = $(RISCV_PREFIX)-objcopy
+GCC = $(RISCV_PREFIX)-gcc
+
+ARCHFLAGS =
+ARCHFLAGS += -march=rv32im
+ARCHFLAGS += -mabi=ilp32
+
+GCCFLAGS =
+GCCFLAGS += $(COMMONCFLAGS)
+GCCFLAGS += $(ARCHFLAGS)
+
+LD = $(GCC)
+LDFLAGS =
+LDFLAGS += $(ARCHFLAGS)
+LDFLAGS += -ffreestanding
+LDFLAGS += -nostdlib
+#LDFLAGS += -T $(EVAL_DIR)tests.ld
+#LDFLAGS += -T $(EVAL_DIR)link.ld
+
+ifeq ($(USECLANG),1)
+CC     = $(CLANG)
+CFLAGS = $(CLANGFLAGS)
+else
+CC     = $(GCC)
+CFLAGS = $(GCCFLAGS)
+endif
+
+OBJECTS =
+ifeq ($(BOOT),1)
+OBJECTS += boot.o
+endif
+
+##############################################################################
+
+.PRECIOUS: %.bin
+.PRECIOUS: %.vcd
+
+%.elf:
+	program=$(word 1,$(subst _, ,$*)); \
+	X=$(word 2,$(subst _, ,$*)); \
+	Y=$(word 3,$(subst _, ,$*)); \
+	Z=$(word 4,$(subst _, ,$*)); \
+	echo "Building $@ with program=$$program, X=$$X, Y=$$Y, and Z=$$Z"; \
+	$(CLANG) $(CLANGFLAGS) -E -D$$X -D$$Y -D$$Z lib.S > lib.s; \
+	$(CLANG) $(CLANGFLAGS) -D$$X -D$$Y -D$$Z $$program.S -c -o $(BUILD_DIR)/$*.o; \
+	$(LD) $(LDFLAGS) -o $(BUILD_DIR)/$@ $(BUILD_DIR)/$*.o $(addprefix $(BUILD_DIR), $(addsuffix .o, $(MODULES)))
+
+%.o: %.S
+	@$(CLANG) $(CLANGFLAGS) -c $<
+
+boot.o: $(EVAL_DIR)boot.S
+	@$(CC) $(CFLAGS) -c $<
+
+%.o: %.c
+	@$(CC) $(CFLAGS) -D$(EXPERIMENT) -c $<
+
+%.bin: %.elf
+	@$(OBJCOPY) -O binary $(addprefix $(BUILD_DIR)/, $<) $(BUILD_DIR)/$@
+
+%.objdump: %.elf
+	@$(OBJDUMP) -s --section=.data $(addprefix $(BUILD_DIR)/, $<) > $(BUILD_DIR)/$@
+	@$(OBJDUMP) -d $(addprefix $(BUILD_DIR)/, $<) >> $(BUILD_DIR)/$@
+
+
+# ----------------------------------------- Run the programs
+
+%.vcd: %.bin
+	$(SIM_EXE) $(addprefix $(BUILD_DIR)/, $<)
+	fst2vcd -f sim.fst -o $(addprefix $(BUILD_DIR)/, $*.vcd)
+# cp sim.vcd $(addprefix $(BUILD_DIR)/, $*.vcd)
+
+
+
+clean:
+	$(RM) -r __pycache__
+	$(RM) $(BUILD_DIR)/*.o
+	$(RM) $(BUILD_DIR)/*.elf
+	$(RM) $(BUILD_DIR)/*.bin
+	$(RM) $(BUILD_DIR)/*.vcd
+	$(RM) $(BUILD_DIR)/*.vcdcat
+	$(RM) $(BUILD_DIR)/*.objdump
+	$(RM) *.vcd
+	$(RM) *.vcdcat
+	$(RM) *.mem
+	$(RM) *.objdump
+	$(RM) *.results
