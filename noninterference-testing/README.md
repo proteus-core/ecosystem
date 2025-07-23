@@ -25,6 +25,8 @@ The set of selected signals (conservative or liberal) are defined in [signals.py
 Given two sets of signals, the [Comparator](./vcd_scripts/comparator.py) class reports any mismatch between the signal sets.
 If the set of selected signals match, then the program is secure; otherwise, there is a side-channel violation.
 
+TODO: the same principle can be applied for correctness evaluation (see [run-correctness-eval.py](./run-correctness-eval.py)) but, for now, this script is buggy.
+
 ## Run security evaluation
 ### Compile programs
 The first step is to compile the programs. Make sure the toolchain path is correct; the default is [../llvm-project](../llvm-project).

@@ -54,13 +54,6 @@ def check_all_combinations(comparator, benchs, secure_defenses, insecure_defense
     logger.result(f"Secure programs: {secure_programs_found_secure}/{secure_programs_total} Insecure programs: {insecure_programs_found_insecure}/{insecure_programs_total}")
 
 
-def get_first_vcd_file():
-    vcd_files = glob.glob(f"{benchmark_path}/vcd/*.vcd")
-    if not vcd_files:
-        raise FileNotFoundError(f"No VCD files found in {benchmark_path}/vcd/")
-    return vcd_files[0]
-
-
 def main():
     args = parse_arguments()
 
@@ -70,9 +63,9 @@ def main():
 
     # Select comparator based on arguments
     if args.compare_signals == "liberal":
-        comparator = Comparator(Signals.get_liberal_security_signals(get_first_vcd_file()))
+        comparator = Comparator(Signals.get_liberal_security_signals(Signals.get_example_vcd_file(benchmark_path)))
     elif args.compare_signals == "conservative":
-        comparator = Comparator(Signals.get_conservative_security_signals(get_first_vcd_file()))
+        comparator = Comparator(Signals.get_conservative_security_signals(Signals.get_example_vcd_file(benchmark_path)))
     else:
         print(f"Error: Invalid compare-signals option '{args.compare_signals}'. Choose either 'liberal' or 'conservative'.")
         sys.exit(1)

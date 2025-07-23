@@ -1,93 +1,68 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import sys
-import subprocess
 from vcdvcd import VCDVCD
-import signals as Signals
-from comparator import Comparator
-import logger
+
+# Import from vcd_scripts package
+from vcd_scripts import signals as Signals
+from vcd_scripts.comparator import Comparator
+from vcd_scripts import logger
 logger = logger.Logger(debug_mode=True) # Change to true for debugging
 
-def check_all_inputs(comparator, filenames):
+def check_divergences(comparator, program_path, filenames):
     base = filenames[0]
     logger.debug(f"+ Check all input with base={base}")
     for filename in filenames[1:]:
-        if comparator.check_diff(f"{base}", f"{filename}") == 1:
+        if comparator.check_diff(f"{program_path}/vcd/{base}", f"{program_path}/vcd/{filename}") == 1:
             logger.error(f"!--- Programs {filename} diverge ---!")
             return 1
     logger.debug(f"!--- Program {filename} is equivalent to {base} ---!")
     return 0
 
-def check_all_combinations(comparator, base_file, defenses, leakage_sinks, exp_numbers):
-    filenames = []
-    for leak_sink in leakage_sinks:
-        for fence in defenses:
-            filenames.append(f"{base_file}_{fence}_{leak_sink}_{exp_numbers[0]}")
-    check_all_inputs(comparator, filenames)
 
-    filenames = []
-    for leak_sink in leakage_sinks:
-        for fence in defenses:
-            filenames.append(f"{base_file}_{fence}_{leak_sink}_{exp_numbers[1]}")
-    check_all_inputs(comparator, filenames)
-
-
-def get_correctness_comparator():
-    return Comparator(Signals.get_retired_signals("./build/ssb-test1_FULLFENCE_LEAKLOAD_EXP0.vcd"))
-
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Run security evaluation on benchmarks.")
+    parser.add_argument("--program_path", type=str, default="./programs", help="Path to the program directory (default: ./programs)")
+    parser.add_argument(
+        "--p1",
+        type=str,
+        help="Name of the benchmark to run (e.g., pht-test1_FULLFENCE_LEAKLOAD_EXP0)."
+    )
+    parser.add_argument(
+        "--p2",
+        type=str,
+        help="Name of the benchmark to run (e.g., pht-test1_NOFENCE_LEAKLOAD_EXP0)."
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Run in debug mode"
+    )
+    args = parser.parse_args()
+    return args
 
 def main():
-    if len(sys.argv) != 3:
-        print("Error: Exactly 2 arguments are required.")
-        print(f"Usage: {sys.argv[0]} program_path program_name")
+    args = parse_arguments()
+    program_path = args.program_path
+    p1 = args.p1
+    p2 = args.p2
+    comparator = Comparator(Signals.get_retired_signals(Signals.get_example_vcd_file(program_path)))
+
+    if not p1 or not p2:
+        print("Error: Both --p1 and --p2 arguments are required.")
         sys.exit(1)
 
-    all_bench = ['pht-test1', 'pht-test2', 'psf-test1', 'ssb-test1']
-
-    benchmark_path, benchmark = sys.argv[1:3]
-    os.chdir(benchmark_path)
-
-    if benchmark not in all_bench+["all"]:
-        print(f"Error: Benchmark '{benchmark}' is not supported.")
-        print(f"Supported benchmarks: {all_bench} or all")
-        sys.exit(1)
-
-    # Experiment configuration
-    defenses = ["FULLFENCE", "NOFENCE"]
-    # leakage_sinks = ["LEAKLOAD", "LEAKSTORE", "LEAKBR", "LEAKDIV"]
-    leakage_sinks = ["LEAKLOAD"]
-    exp_numbers = ["EXP1", "EXP0"]
-
-    comparator = get_correctness_comparator()
-
-    if benchmark == "all":
-        benchs = all_bench
+    if args.debug:
+        debug(comparator, program_path, p1, p2)
     else:
-        benchs = [benchmark]
-    
-    for bench in benchs:
-        base_file = f"./build/{bench}"
-        print(f"====== Running experiment for {base_file}")
-        check_all_combinations(comparator, base_file, defenses, leakage_sinks, exp_numbers)
-        print("")
+        print(f"Running correctness evaluation for {p1} and {p2}")
+        check_divergences(comparator, program_path, [p1, p2])
     sys.exit(0)
 
-def debug():
-    if len(sys.argv) < 2:
-        print("Error: At least 1 argument is required.")
-        print(f"Usage: {sys.argv[0]} program_path")
-        sys.exit(1)
-
-    benchmark_path = sys.argv[1]
-    os.chdir(benchmark_path)
-    comparator = get_correctness_comparator()
-
-    # TODO: We need a way to filter out the fence
-    comparator.introspect("./build/pht-test1_FULLFENCE_LEAKLOAD_EXP0", "./build/pht-test1_NOFENCE_LEAKLOAD_EXP0", mintime=0, maxtime=0)
-
-    sys.exit(0)
+def debug(comparator, program_path, p1, p2):
+    comparator.introspect(f"{program_path}/vcd/{p1}", f"{program_path}/vcd/{p2}", mintime=0, maxtime=0)
 
 
 if __name__ == "__main__":
-    #main()
-    debug()
+    main()

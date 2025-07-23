@@ -1,3 +1,4 @@
+import glob
 import re
 import sys
 from vcdvcd import VCDVCD
@@ -159,3 +160,10 @@ def get_retired_signals(example_vcdfile):
     all_signals = [s for s in all_signals if "TOP.Core.pipeline.retirementStage" in s]
     
     return all_signals
+
+
+def get_example_vcd_file(benchmark_path):
+    vcd_files = glob.glob(f"{benchmark_path}/vcd/*.vcd")
+    if not vcd_files:
+        raise FileNotFoundError(f"No VCD files found in {benchmark_path}/vcd/")
+    return vcd_files[0]
