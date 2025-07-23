@@ -1,6 +1,6 @@
 include Makefile.include
 BUILD_DIR = build
-MODULES =
+VCD_DIR = vcd
 BOOT = 0
 LDFLAGS += -T layout.lds
 
@@ -17,14 +17,16 @@ BIN_TARGETS := $(addsuffix .bin, $(TARGETS))
 VCD_TARGETS := $(addsuffix .vcd, $(TARGETS))
 OBJDUMP_TARGETS := $(addsuffix .objdump, $(TARGETS))
 
+.PHONY: all build elf bin vcd objdump ssb
+
 # Default target
 all: elf bin
 
-elf: $(ELF_TARGETS)
-bin: $(BIN_TARGETS)
-vcd: $(VCD_TARGETS)
-objdump: $(OBJDUMP_TARGETS)
+dirs:
+	@mkdir -p $(BUILD_DIR)
+	@mkdir -p $(SIM_DIR)
 
-
-SSB_TARGETS := $(foreach Z,$(EXP_NUMBER), $(foreach X,$(FENCE_VALUES),$(foreach Y,$(LEAK_VALUES),ssb-test1_$(X)_$(Y)_$(Z))))
-ssb: $(addsuffix .vcd, $(SSB_TARGETS)) $(addsuffix .objdump, $(SSB_TARGETS))
+elf: dirs $(ELF_TARGETS)
+bin: dirs $(BIN_TARGETS)
+vcd: dirs $(VCD_TARGETS)
+objdump: dirs $(OBJDUMP_TARGETS)

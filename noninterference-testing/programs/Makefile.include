@@ -1,5 +1,5 @@
 EVAL_DIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-BASE_DIR = $(abspath $(EVAL_DIR)/..)
+BASE_DIR = $(abspath $(EVAL_DIR)/../..)
 SIM_DIR = $(BASE_DIR)/proteus/sim
 SIM_EXE = $(SIM_DIR)/build/sim
 GTKW_DIR = $(EVAL_DIR)gtkw
@@ -9,6 +9,7 @@ USECLANG ?= 1
 EXPERIMENT ?= LEGACY
 BOOT ?= 0
 BUILD_DIR ?= ./
+VCD_DIR ?= ./
 
 PYTHON = python3
 GTKW = gtkwave
@@ -101,8 +102,7 @@ boot.o: $(EVAL_DIR)boot.S
 
 %.vcd: %.bin
 	$(SIM_EXE) $(addprefix $(BUILD_DIR)/, $<)
-	fst2vcd -f sim.fst -o $(addprefix $(BUILD_DIR)/, $*.vcd)
-# cp sim.vcd $(addprefix $(BUILD_DIR)/, $*.vcd)
+	fst2vcd -f sim.fst -o $(addprefix $(VCD_DIR)/, $*.vcd)
 
 
 
