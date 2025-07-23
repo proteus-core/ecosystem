@@ -1,5 +1,5 @@
 from vcdvcd import VCDVCD
-import logger
+from . import logger
 from itertools import zip_longest
 logger = logger.Logger(debug_mode=False)
 

@@ -3,7 +3,7 @@ import sys
 from vcdvcd import VCDVCD
 
 
-def get_std_security_signals(example_vcdfile):
+def get_liberal_security_signals(example_vcdfile):
     """
     Generate standard security signals for a given core configuration.
 
@@ -49,7 +49,7 @@ def get_std_security_signals(example_vcdfile):
     return signals
 
 
-def get_hardcore_security_signals(example_vcdfile):
+def get_conservative_security_signals(example_vcdfile):
     """
     Returns all signals from a VCD file, except signals related to data.
     This is stronger than get_std_security_signals() (more signals are checked).
@@ -60,7 +60,7 @@ def get_hardcore_security_signals(example_vcdfile):
     Returns:
     list: A list of filtered signal names.
 
-    TODO: Not super thoroughly tested: maybe more signals should be filtered out.
+    TODO: Not super thoroughly tested: likely more signals should be filtered out.
     """
 
     all_signals = VCDVCD(example_vcdfile).references_to_ids.keys()
@@ -102,7 +102,7 @@ def get_hardcore_security_signals(example_vcdfile):
     ]
     combined_regfile_pattern = re.compile('|'.join(regfile_patterns))
 
-    # TODO: Problem with when signals
+    # TODO: Problem with "when" signals
     # When signals usually indicate a change in the pipeline state
     # However, taken in isolation, they are not always meaningful 
     #
@@ -152,32 +152,10 @@ def get_retired_signals(example_vcdfile):
     Returns:
     list: A list of filtered signal names.
 
-    TODO: Not super thoroughly tested: maybe more signals should be filtered out.
+    TODO: Not super thoroughly tested
     """
     all_signals = VCDVCD(example_vcdfile).references_to_ids.keys()
     # Only keep signals related to the pipeline retirementStage
     all_signals = [s for s in all_signals if "TOP.Core.pipeline.retirementStage" in s]
     
-    return all_signals
-
-
-def get_TODO(example_vcdfile):
-    """
-    Return signals from a VCD file that correcpond to 
-    => Such comparison only works if the programs are very slightly different: same number of
-    instructions, same memory layout, etc.
-    => For instance, one can compare programs with fences and programs with nops.
-
-    Parameters:
-    example_vcdfile (str): The path to the VCD file.
-
-    Returns:
-    list: A list of filtered signal names.
-
-    TODO: Not super thoroughly tested: maybe more signals should be filtered out.
-    """
-    all_signals = VCDVCD(example_vcdfile).references_to_ids.keys()
-    # Only keep signals related to the pipeline retirementStage
-    all_signals = [s for s in all_signals if "TOP.Core.pipeline.retirementStage" in s]
-
     return all_signals

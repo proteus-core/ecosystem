@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-import os
 import sys
-import subprocess
 from vcdvcd import VCDVCD
-import signals as Signals
-from comparator import Comparator
-import logger
+import argparse
+import glob
+
+# Import from vcd_scripts package
+from vcd_scripts import signals as Signals
+from vcd_scripts.comparator import Comparator
+from vcd_scripts import logger
+
 logger = logger.Logger(debug_mode=False) # Change to true for debugging
 
 def check_all_inputs(comparator, filename, exp_numbers):
@@ -25,7 +28,7 @@ def check_all_combinations(comparator, benchs, secure_defenses, insecure_defense
     insecure_programs_found_insecure = 0
 
     for bench in benchs:
-        base_file = f"./build/{bench}"
+        base_file = f"{benchmark_path}/vcd/{bench}"
         print(f"====== Running experiment for {base_file}")
 
         for leak_sink in leakage_sinks:
@@ -51,29 +54,34 @@ def check_all_combinations(comparator, benchs, secure_defenses, insecure_defense
     logger.result(f"Secure programs: {secure_programs_found_secure}/{secure_programs_total} Insecure programs: {insecure_programs_found_insecure}/{insecure_programs_total}")
 
 
-def get_security_comparator():
-    return Comparator(Signals.get_std_security_signals("./build/ssb-test1_FULLFENCE_LEAKLOAD_EXP0.vcd"))
-
-def get_hardcore_comparator():
-    return Comparator(Signals.get_hardcore_security_signals("./build/ssb-test1_FULLFENCE_LEAKLOAD_EXP0.vcd"))
+def get_first_vcd_file():
+    vcd_files = glob.glob(f"{benchmark_path}/vcd/*.vcd")
+    if not vcd_files:
+        raise FileNotFoundError(f"No VCD files found in {benchmark_path}/vcd/")
+    return vcd_files[0]
 
 
 def main():
-    if len(sys.argv) != 3:
-        print("Error: Exactly 2 arguments are required.")
-        print(f"Usage: {sys.argv[0]} program_path program_name")
+    args = parse_arguments()
+
+    global benchmark_path
+    benchmark_path = args.program_path
+    benchmark = args.program_name
+
+    # Select comparator based on arguments
+    if args.compare_signals == "liberal":
+        comparator = Comparator(Signals.get_liberal_security_signals(get_first_vcd_file()))
+    elif args.compare_signals == "conservative":
+        comparator = Comparator(Signals.get_conservative_security_signals(get_first_vcd_file()))
+    else:
+        print(f"Error: Invalid compare-signals option '{args.compare_signals}'. Choose either 'liberal' or 'conservative'.")
         sys.exit(1)
 
-    all_bench = ['pht-test1', 'pht-test2', 'psf-test1', 'ssb-test1']
-
-    benchmark_path, benchmark = sys.argv[1:3]
-
-    if benchmark == "debug":
-        debug()
+    if args.debug:
+        debug(comparator, args.debug)
         sys.exit(0)
 
-    os.chdir(benchmark_path)
-
+    all_bench = ['pht-test1', 'pht-test2', 'psf-test1', 'ssb-test1']
     if benchmark not in all_bench+["all"]:
         print(f"Error: Benchmark '{benchmark}' is not supported.")
         print(f"Supported benchmarks: {all_bench} or all")
@@ -85,9 +93,6 @@ def main():
     leakage_sinks = ["LEAKLOAD", "LEAKSTORE", "LEAKBR", "LEAKJMP", "LEAKDIV"]
     exp_numbers = ["EXP1", "EXP0"]
 
-    comparator = get_security_comparator()
-    #comparator = get_hardcore_comparator()
-
     if benchmark == "all":
         benchs = all_bench
     else:
@@ -96,24 +101,37 @@ def main():
     check_all_combinations(comparator, benchs, secure_defenses, insecure_defenses, leakage_sinks, exp_numbers)
     sys.exit(0)
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Run security evaluation on benchmarks.")
+    parser.add_argument("--program_path", type=str, default="./programs", help="Path to the program directory (default: ./programs)")
+    parser.add_argument(
+        "--program_name",
+        type=str,
+        default="all",
+        help="Name of the benchmark to run (default: all). Options: all, pht-test1, pht-test2, psf-test1, ssb-test1"
+    )
+    # Choose security comparator
+    parser.add_argument(
+        "--compare-signals",
+        choices=["conservative", "liberal"],
+        default="liberal",
+        help="Choose which signals to compare: conservative (all signals except selected non-observable signals) or liberal (only selected observable signals) (default: liberal)"
+    )
+    parser.add_argument(
+        "--debug",
+        type=str,
+        default=None,
+        help="Run in debug mode, specify the target program to debug (e.g., pht-test1_FULLFENCE_LEAKLOAD)"
+    )
+    args = parser.parse_args()
+    return args
 
-def debug():
-    if len(sys.argv) < 2:
-        print("Error: At least 1 argument is required.")
-        print(f"Usage: {sys.argv[0]} program_path")
-        sys.exit(1)
 
-    benchmark_path = sys.argv[1]
-    os.chdir(benchmark_path)
-
-    # Chose security comparator
-    comparator = get_hardcore_comparator()
-    #comparator = get_security_comparator()
-
-    def debug_program(target, mintime=0, maxtime=0, maxsignals=0):
-        comparator.introspect(f"./build/{target}_EXP0", f"./build/{target}_EXP1", mintime=mintime, maxtime=maxtime, maxsignals=maxsignals)
-
-    debug_program("pht-test1_FULLFENCE_LEAKLOAD")
+def debug(comparator, target):
+    mintime=0
+    maxtime=0
+    maxsignals=0
+    comparator.introspect(f"{benchmark_path}/vcd/{target}_EXP0", f"{benchmark_path}/vcd/{target}_EXP1", mintime=mintime, maxtime=maxtime, maxsignals=maxsignals)
     sys.exit(0)
 
 
