@@ -2,6 +2,8 @@
 
 This repository aims to contain software tools, benchmarks, and other scripts useful for installing, using, extending, and evaluating Proteus.
 
+First, make sure that you clone this repository recursively with `git clone --recurse-submodules` or fetch the submodules before building the container with `git submodule update --init --recursive`.
+
 ## Docker setup
 
 There should be a central Dockerfile that installs the bare minimum setup for running simulations.
@@ -27,7 +29,11 @@ You can launch a container after building:
 $ docker run -it ecosystem
 ```
 
-(optionally attaching the Proteus core directory as a volume):
+Optionally, you can attach the Proteus core directory as a volume, for example after cloning it to `core`:
+
+```shell-session
+$ docker run -v ./core:/ecosystem/core -it ecosystem
+```
 
 ## Simulation
 
