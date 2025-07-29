@@ -1,0 +1,84 @@
+name: Docker build test
+on: [push, pull_request]
+
+jobs:
+  build-docker:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: "Dockerfile"
+          tags: ecosystem:latest
+          push: false
+          build-args: |
+            INSTALL_EVAL_HD=true
+            INSTALL_PROTEUS=true
+            INSTALL_TOOLCHAIN=true
+          outputs: type=docker,dest=/tmp/ecosystem-docker.tar
+
+      - name: Upload Docker artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecosystem-docker
+          path: /tmp/ecosystem-docker.tar
+
+  ci-tests:
+    name: ${{ matrix.test-script }}
+    runs-on: ubuntu-latest
+    needs: build-docker
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Download Docker artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ecosystem-docker
+          path: /tmp
+
+      - name: Load Docker image
+        run: docker load --input /tmp/ecosystem-docker.tar
+
+      - name: Run ${{ matrix.test-script }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ecosystem:latest
+          run: "cd /ecosystem/newlib-bsp && make main.bin && ../simulation/bin/sim main.bin"
+
+  push-image:
+    name: Push Docker image
+    runs-on: ubuntu-latest
+    # only run when build and ci-tests both succeed
+    needs: [build-docker, ci-tests ]
+    steps:
+      - name: Download Docker artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ecosystem-docker
+          path: /tmp
+
+      - name: Load Docker image
+        run: docker load --input /tmp/ecosystem-docker.tar
+
+      - name: Log in to the container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker image
+        run: |
+          docker tag ecosystem:latest ghcr.io/${{ github.repository_owner }}/ecosystem:latest
+          docker push ghcr.io/${{ github.repository_owner }}/ecosystem:latest
