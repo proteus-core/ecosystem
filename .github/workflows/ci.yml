@@ -54,7 +54,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ecosystem:latest
-          run: "cd /ecosystem/newlib-bsp && make main.bin && ../simulation/bin/sim main.bin"
+          run: "cd /ecosystem/simulation && make && cd /ecosystem/newlib-bsp && make main.bin && ../simulation/build/sim main.bin"
 
   push-image:
     name: Push Docker image
