@@ -1,0 +1,29 @@
+# read design
+read_verilog ../core/Core.v
+
+# elaborate design hierarchy
+hierarchy -check -top Core
+
+# flatten the design
+flatten
+
+# the high-level stuff
+proc; opt; fsm; opt; memory; opt
+
+# mapping to internal cell library
+techmap; opt
+
+# mapping flip-flops to cell library
+dfflibmap -liberty /ecosystem/eval-hd/freepdk-45nm/stdcells.lib
+
+# mapping logic to cell library with timing constraint
+abc -liberty /ecosystem/eval-hd/freepdk-45nm/stdcells.lib -fast -D 2625
+
+# cleanup
+clean
+
+# write synthesized design
+write_verilog /ecosystem/synthesis/result.v
+
+# get ASIC gate count and area numbers
+stat -liberty /ecosystem/eval-hd/freepdk-45nm/stdcells.lib
