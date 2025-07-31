@@ -14,7 +14,7 @@ RUN echo "Setup Proteus core: ${INSTALL_PROTEUS}"
 # Basic dependencies
 ################################################################################
 
-RUN apt-get update && apt-get -yqq install build-essential git openjdk-17-jdk verilator libz-dev gcc-riscv64-unknown-elf python3-pip python3-venv
+RUN apt-get update && apt-get -yqq install build-essential git openjdk-17-jdk verilator libz-dev gcc-riscv64-unknown-elf python3-pip python3-venv gtkwave
 
 WORKDIR /ecosystem
 COPY . .

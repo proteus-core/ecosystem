@@ -1,19 +1,23 @@
-import io
-import re
+#!/usr/bin/env python3
+
+import argparse
+import json
 import sys
+import re
+from datetime import datetime
 from typing import TextIO
 
-from vcd_signal import SignalStore
-from timestamp import Timestamp, Unit
+import interface_parser
 
-
-def set_ids(file: TextIO, signals: SignalStore, of: TextIO):
+def set_ids(file: TextIO, signals: list[str], of: TextIO) -> dict:
     upscope_str = r'\$scope\s+(?P<type>\S+)\s+(?P<name>\S+)\s+\$end'
     downscope_str = r'\$upscope\s+\$end'
     var_str = r'\$var\s*(?P<type>\w+)\s*\d+\s*(?P<id>\S+)\s*(?P<name>\w+)(\s*\[\d+:\d+\])?\s*\$end'
     timescale_inline_str = r'\$timescale\s+(?P<value>\d+)(?P<unit>\w+)'
 
     timescale_on_next = False
+
+    ids = {}
 
     scopes = []
     for line in file:
@@ -22,10 +26,9 @@ def set_ids(file: TextIO, signals: SignalStore, of: TextIO):
         var_match = re.match(var_str, line)
         if var_match:
             name = ".".join(scopes + [var_match.group('name')])
-            for signal in signals.combined():
-                if signal.name_match(name):
-                    signal.set_id(name, var_match.group('id'))
-                    of.write(line + "\n")
+            if name in signals:
+                of.write(line + "\n")
+                ids[var_match.group('id')] = name
         else:
             upscope_match = re.match(upscope_str, line)
             if upscope_match:
@@ -44,8 +47,6 @@ def set_ids(file: TextIO, signals: SignalStore, of: TextIO):
                         if timescale_on_next:
                             timescale_on_next = False
                             timescale_inline_match = re.match(r'\s*(?P<value>\d+)(?P<unit>\w+)', line)
-                        signals.update_timescale(Timestamp(int(timescale_inline_match.group('value')),
-                                                           Unit(timescale_inline_match.group('unit'))))
                     else:
                         if line.startswith("$timescale"):
                             timescale_on_next = True
@@ -55,33 +56,66 @@ def set_ids(file: TextIO, signals: SignalStore, of: TextIO):
                                 of.write(line + "\n")
                                 break
 
-    for signal in signals.combined():
-        if signal.get_id() is None:
-            raise ValueError("A signal (" + signal.get_label() + ") has no ids")
-    print("IDs collected for {}...".format(file.name), file=sys.stderr)
+    # TODO: check for signals that were not found (e.g., remove them from the list as we find them, check if empty)
+    for signal in signals:
+        if signal not in ids.values():
+            print("Warning: signal {} not found in VCD!".format(signal))
+    print("IDs collected for {}...".format(file.name))
+    return ids
 
 
-def load_values(file: TextIO, signals: SignalStore, of: TextIO):
-    timestamp = Timestamp(0, Unit.SECOND)
+def load_values(file: TextIO, ids: dict, of: TextIO):
     for line in file:
         line = line.strip()
         if line.startswith('#'):
-            timestamp = signals.get_timescale() * int(line[1:])
-            # keep line
+            # keep timestamp line
             of.write(line + '\n')
         else:
             match = re.match(r'(?P<value>(b[x01]+\s+|[x01]))?(?P<id>\S+)$', line)
             if match:
                 iden = match.group('id')
-                for signal in signals.combined():
-                    if signal.id_match(iden):
-                        signal.append_value(iden, timestamp, match.group('value').strip())
-                        # keep line
-                        of.write(line + '\n')
+                if iden in ids:
+                    # keep line
+                    of.write(line + '\n')
 
 
-def parse_vcd(vcd_file: str, signals: SignalStore, output: str):
+def strip_vcd(vcd_file: str, signals: list[str], output: str):
     with open(vcd_file) as file:
         with open(output, 'w') as of:
-            set_ids(file, signals, of)
-            load_values(file, signals, of)
+            ids = set_ids(file, signals, of)
+            load_values(file, ids, of)
+
+
+def get_parser():
+    parser = argparse.ArgumentParser(
+        description='Create a new VCD file that only contains the signals of interest.',
+    )
+
+    parser.add_argument(
+        '-i',
+        dest='interface',
+        help='interface file',
+        required=True,
+    )
+    parser.add_argument(
+        '-f',
+        dest='file',
+        help='the VCD file to parse',
+        required=True,
+    )
+    parser.add_argument(
+        '-o',
+        dest='output',
+        help='output compressed VCD file',
+        required=True,
+    )
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = get_parser()
+    start = datetime.now()
+    interface = interface_parser.InterfaceParser(args.interface)
+    signals = interface.get_all_signals_list()
+    strip_vcd(args.file, signals, args.output)
+    print(f"Stripped VCD file in {datetime.now() - start}")
