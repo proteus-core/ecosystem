@@ -29,4 +29,10 @@ RUN if [ "${INSTALL_TOOLCHAIN}" = "true" ] ; then ./install-scripts/toolchain.sh
 RUN if [ "${INSTALL_EVAL_HD}" = "true" ] ; then ./install-scripts/eval-hd.sh ; else echo Skipping EVAL-HD setup... ; fi
 RUN if [ "${INSTALL_PROTEUS}" = "true" ] ; then ./install-scripts/proteus.sh ; else echo Skipping Proteus core setup... ; fi
 
+# add RISC-V toolchain to path if it was installed (https://stackoverflow.com/a/51264575)
+ENV TOOLCHAIN_PATH=${INSTALL_TOOLCHAIN:+/opt/riscv/bin:}
+ENV TOOLCHAIN_PATH=${TOOLCHAIN_PATH:-}
+
+ENV PATH=${TOOLCHAIN_PATH}${PATH}
+
 CMD /bin/bash
