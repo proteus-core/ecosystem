@@ -95,6 +95,17 @@ We should integrate this into the repository.
 Analyzing waveforms output from simulations is useful for security and correctness testing and other purposes, such as profiling.
 We have a collection of scripts that make it easier to work with and parse these files.
 
+### VCD stripper
+
+This script reduces the size of VCD files by only keeping the relevant signal changes (based on a CPU interface file):
+
+```
+$ /ecosystem/simulation/build/sim --dump-fst output.fst test.bin
+$ /ecosystem/waveform-analysis/strip.py -f output.vcd -i proteus-o.json -o output-stripped.vcd
+IDs collected for output.vcd...
+Stripped VCD file in 0:44:07.174840
+```
+
 ## Noninterference-based testing
 
 This is the main security testing that was performed for security extensions, and it relies on the waveform parsing library.
