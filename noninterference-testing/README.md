@@ -43,7 +43,7 @@ make -C programs objdump
 ### Run simulations
 The second step is to run the simulator to get the vcd files of these programs. Make sure the path of Proteus is correct; the default is [../proteus](../proteus). Additionally, make sure Proteus is compiled with the DynamicCore (`make -C sim CORE=riscv.CoreDynamicExtMem`).
 ```
-make -C programs vcd
+make -C programs vcd USECLANG=0 RISCV_PREFIX=riscv32-unknown-elf SIM_EXE=/ecosystem/simulation/build/sim
 ```
 Resulting vcd files are in [./programs/vcd/](./programs/vcd/).
 

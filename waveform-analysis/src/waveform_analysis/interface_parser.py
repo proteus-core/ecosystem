@@ -4,9 +4,9 @@ import json
 import os
 
 class InterfaceParser():
-    def __init__(self, path):
+    def __init__(self, path: str):
         dirname = os.path.dirname(__file__)
-        with open(os.path.join(dirname, "../cpu-interfaces/" + path), 'r') as f:
+        with open(os.path.join(dirname, "/ecosystem/cpu-interfaces/" + path), 'r') as f:
             self.description = json.load(f)
 
     def get_performance_counters(self):
@@ -18,20 +18,19 @@ class InterfaceParser():
     def get_instruction_stream(self):
         return self.description['instruction_stream']
 
-    def get_instruction_stream_list(self):
-        lst = []
+    def get_instruction_stream_list(self) -> list[str]:
+        lst: list[str] = []
         for signal in self.get_instruction_stream().values():
             lst.append(signal)
         return lst
 
-    def get_performance_counters_list(self):
-        lst = []
+    def get_performance_counters_list(self) -> list[str]:
+        lst: list[str] = []
         for counter_lst in self.get_performance_counters().values():
             lst = lst + counter_lst
         return lst
 
     def get_all_signals_list(self):
-        lst = []
         return [self.get_clk()] + self.get_instruction_stream_list() + self.get_performance_counters_list()
 
 proteus_o_parser = InterfaceParser('proteus-o.json')

@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
-import json
-import sys
 import re
 from datetime import datetime
 from typing import TextIO
 
-import interface_parser
+from . import interface_parser
 
-def set_ids(file: TextIO, signals: list[str], of: TextIO) -> dict:
+def set_ids(file: TextIO, signals: list[str], of: TextIO) -> dict[str, str]:
     upscope_str = r'\$scope\s+(?P<type>\S+)\s+(?P<name>\S+)\s+\$end'
     downscope_str = r'\$upscope\s+\$end'
     var_str = r'\$var\s*(?P<type>\w+)\s*\d+\s*(?P<id>\S+)\s*(?P<name>\w+)(\s*\[\d+:\d+\])?\s*\$end'
@@ -17,9 +15,9 @@ def set_ids(file: TextIO, signals: list[str], of: TextIO) -> dict:
 
     timescale_on_next = False
 
-    ids = {}
+    ids: dict[str, str] = {}
 
-    scopes = []
+    scopes: list[str] = []
     for line in file:
         line = line.strip()
         # can keep all these lines for simplicity
@@ -64,7 +62,7 @@ def set_ids(file: TextIO, signals: list[str], of: TextIO) -> dict:
     return ids
 
 
-def load_values(file: TextIO, ids: dict, of: TextIO):
+def load_values(file: TextIO, ids: dict[str, str], of: TextIO):
     for line in file:
         line = line.strip()
         if line.startswith('#'):

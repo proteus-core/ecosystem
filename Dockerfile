@@ -17,12 +17,19 @@ RUN echo "Setup Proteus core: ${INSTALL_PROTEUS}"
 RUN apt-get update && apt-get -yqq install build-essential git openjdk-17-jdk verilator libz-dev gcc-riscv64-unknown-elf python3-pip python3-venv gtkwave
 
 WORKDIR /ecosystem
-COPY . .
+COPY ./benchmarks ./benchmarks
+COPY ./cpu-interfaces ./cpu-interfaces
+COPY ./formal-verification ./formal-verification
+COPY ./functional-tests ./functional-tests
+COPY ./install-scripts ./install-scripts
+COPY ./newlib-bsp ./newlib-bsp
+COPY ./noninterference-testing ./noninterference-testing
+COPY ./simulation ./simulation
+COPY ./synthesis ./synthesis
+COPY ./waveform-analysis ./waveform-analysis
 
 RUN ./install-scripts/sbt.sh
-
-WORKDIR /ecosystem/waveform-analysis
-RUN python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+RUN ./install-scripts/python-modules.sh
 
 WORKDIR /ecosystem
 RUN if [ "${INSTALL_TOOLCHAIN}" = "true" ] ; then ./install-scripts/toolchain.sh ; else echo Skipping RISC-V toolchain... ; fi

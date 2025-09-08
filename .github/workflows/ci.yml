@@ -34,7 +34,6 @@ jobs:
           path: /tmp/ecosystem-docker.tar
 
   ci-tests:
-    name: ${{ matrix.test-script }}
     runs-on: ubuntu-latest
     needs: build-docker
     steps:
@@ -50,11 +49,17 @@ jobs:
       - name: Load Docker image
         run: docker load --input /tmp/ecosystem-docker.tar
 
-      - name: Run ${{ matrix.test-script }}
+      - name: Run Newlib test
         uses: addnab/docker-run-action@v3
         with:
           image: ecosystem:latest
           run: "cd /ecosystem/simulation && make && cd /ecosystem/newlib-bsp && make main.bin && ../simulation/build/sim main.bin"
+
+      - name: Run non-interference test
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ecosystem:latest
+          run: "cd /ecosystem && make -C simulation CORE=riscv.CoreDynamicExtMem && source /ecosystem/waveform-analysis/.venv/bin/activate && cd /ecosystem/noninterference-testing/ && make -C programs vcd USECLANG=0 RISCV_PREFIX=riscv32-unknown-elf SIM_EXE=/ecosystem/simulation/build/sim && ./run-security-eval.py"
 
   push-image:
     name: Push Docker image

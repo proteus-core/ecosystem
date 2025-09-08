@@ -1,7 +1,7 @@
 EVAL_DIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BASE_DIR = $(abspath $(EVAL_DIR)/../..)
 SIM_DIR = $(BASE_DIR)/proteus/sim
-SIM_EXE = $(SIM_DIR)/build/sim
+SIM_EXE ?= $(SIM_DIR)/build/sim
 GTKW_DIR = $(EVAL_DIR)gtkw
 CORE ?= riscv.CoreExtMem
 BUILD_CORE ?= 1
@@ -77,12 +77,12 @@ endif
 	Y=$(word 3,$(subst _, ,$*)); \
 	Z=$(word 4,$(subst _, ,$*)); \
 	echo "Building $@ with program=$$program, X=$$X, Y=$$Y, and Z=$$Z"; \
-	$(CLANG) $(CLANGFLAGS) -E -D$$X -D$$Y -D$$Z lib.S > lib.s; \
-	$(CLANG) $(CLANGFLAGS) -D$$X -D$$Y -D$$Z $$program.S -c -o $(BUILD_DIR)/$*.o; \
+	$(CC) $(CFLAGS) -E -D$$X -D$$Y -D$$Z lib.S > lib.s; \
+	$(CC) $(CFLAGS) -D$$X -D$$Y -D$$Z $$program.S -c -o $(BUILD_DIR)/$*.o; \
 	$(LD) $(LDFLAGS) -o $(BUILD_DIR)/$@ $(BUILD_DIR)/$*.o $(addprefix $(BUILD_DIR), $(addsuffix .o, $(MODULES)))
 
 %.o: %.S
-	@$(CLANG) $(CLANGFLAGS) -c $<
+	@$(CC) $(CFLAGS) -c $<
 
 boot.o: $(EVAL_DIR)boot.S
 	@$(CC) $(CFLAGS) -c $<
@@ -101,7 +101,8 @@ boot.o: $(EVAL_DIR)boot.S
 # ----------------------------------------- Run the programs
 
 %.vcd: %.bin
-	$(SIM_EXE) $(addprefix $(BUILD_DIR)/, $<)
+	$(SIM_EXE) --dump-fst sim.fst $(addprefix $(BUILD_DIR)/, $<)
+	mkdir -p $(VCD_DIR)
 	fst2vcd -f sim.fst -o $(addprefix $(VCD_DIR)/, $*.vcd)
 
 

@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 import argparse
-import os
 import sys
-from vcdvcd import VCDVCD
 
-# Import from vcd_scripts package
-from vcd_scripts import signals as Signals
-from vcd_scripts.comparator import Comparator
-from vcd_scripts import logger
-logger = logger.Logger(debug_mode=True) # Change to true for debugging
 
-def check_divergences(comparator, program_path, filenames):
+from waveform-analysis.logger import log
+from waveform-analysis.signal_extractor import CPUWaveform
+from waveform-analysis.interface_parser import proteus_o_parser
+
+
+def check_divergences(program_path, filenames):
     base = filenames[0]
-    logger.debug(f"+ Check all input with base={base}")
+    log.debug(f"+ Check all input with base={base}")
+    base_waveform = CPUWaveform(f"{program_path}/vcd/{base}", proteus_o_parser)
     for filename in filenames[1:]:
-        if comparator.check_diff(f"{program_path}/vcd/{base}", f"{program_path}/vcd/{filename}") == 1:
-            logger.error(f"!--- Programs {filename} diverge ---!")
+        if not base_waveform.compare_signals(CPUWaveform(f"{program_path}/vcd/{filename}"), proteus_o_parser), proteus_o_parser.get_instruction_stream_list()):
+            log.error(f"!--- Programs {filename} diverge ---!")
             return 1
-    logger.debug(f"!--- Program {filename} is equivalent to {base} ---!")
+    log.debug(f"!--- Program {filename} is equivalent to {base} ---!")
     return 0
 
 
@@ -47,7 +46,6 @@ def main():
     program_path = args.program_path
     p1 = args.p1
     p2 = args.p2
-    comparator = Comparator(Signals.get_retired_signals(Signals.get_example_vcd_file(program_path)))
 
     if not p1 or not p2:
         print("Error: Both --p1 and --p2 arguments are required.")
@@ -57,11 +55,12 @@ def main():
         debug(comparator, program_path, p1, p2)
     else:
         print(f"Running correctness evaluation for {p1} and {p2}")
-        check_divergences(comparator, program_path, [p1, p2])
+        check_divergences(program_path, [p1, p2])
     sys.exit(0)
 
 def debug(comparator, program_path, p1, p2):
-    comparator.introspect(f"{program_path}/vcd/{p1}", f"{program_path}/vcd/{p2}", mintime=0, maxtime=0)
+    # comparator.introspect(f"{program_path}/vcd/{p1}", f"{program_path}/vcd/{p2}", mintime=0, maxtime=0)
+    pass
 
 
 if __name__ == "__main__":
