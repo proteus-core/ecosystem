@@ -59,7 +59,25 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ecosystem:latest
-          run: "cd /ecosystem && make -C simulation CORE=riscv.CoreDynamicExtMem && source /ecosystem/waveform-analysis/.venv/bin/activate && cd /ecosystem/noninterference-testing/ && make -C programs vcd USECLANG=0 RISCV_PREFIX=riscv32-unknown-elf SIM_EXE=/ecosystem/simulation/build/sim && ./run-security-eval.py"
+          run: "cd /ecosystem && make -C simulation CORE=riscv.CoreDynamicExtMem && . /ecosystem/waveform-analysis/.venv/bin/activate && cd /ecosystem/noninterference-testing/ && make -C programs vcd USECLANG=0 RISCV_PREFIX=riscv32-unknown-elf SIM_EXE=/ecosystem/simulation/build/sim && ./run-security-eval.py"
+
+      - name: Run functional tests
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ecosystem:latest
+          run: "cd /ecosystem && make -C functional-tests CORE=riscv.CoreDynamicExtMem && make -C functional-tests"
+
+      - name: Run SpectreGuard benchmarks
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ecosystem:latest
+          run: "cd /ecosystem && make -C simulation CORE=riscv.CoreDynamicExtMem && cd /ecosystem/benchmarks/spectreguard && make && /ecosystem/simulation/build/sim /ecosystem/benchmarks/spectreguard/specBench.bin"
+
+      - name: Run EVAL-HD
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ecosystem:latest
+          run: "cd /ecosystem/synthesis && ./run-yosys.sh"
 
   push-image:
     name: Push Docker image

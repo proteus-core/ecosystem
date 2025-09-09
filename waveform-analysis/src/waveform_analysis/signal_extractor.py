@@ -15,20 +15,35 @@ class CPUWaveform:
         self.max_clock = clock_changes[-1]
         self.clock_count = self.max_clock // self.clock_period
 
-    def get_signals(self, signals: list[str]) -> list[list[tuple[str, int]]]:
+    def get_signals_per_clk(self, signals: list[str]) -> list[list[tuple[str, int]]]:
         """
         Get the values of a list of signals at each clock cycle.
         Returns a list of lists of tuples (signal_name, value), where each inner list corresponds to a clock cycle.
         """
         seq: list[list[tuple[str, int]]] = []
+        wellen_signals = [self.waveform.get_signal_from_path(signal) for signal in signals]
 
         for t in range(0, self.max_clock + self.clock_period, self.clock_period):
-            seq.append([(signal, self.as_int(signal, t)) for signal in signals])
+            seq.append([(signals[idx], signal.value_at_time(t)) for (idx, signal) in enumerate(wellen_signals)])
+
+        return seq
+
+    def get_all_signal_values(self, signals: list[str]) -> list[list[int]]:
+        """
+        Get the values of a list of signals.
+        Returns a list of lists of signal values.
+        """
+        return [[v for (t, v) in self.waveform.get_signal_from_path(signal).all_changes()] for signal in signals]
+        seq: list[list[tuple[str, int]]] = []
+        wellen_signals = [self.waveform.get_signal_from_path(signal) for signal in signals]
+
+        for t in range(0, self.max_clock + self.clock_period, self.clock_period):
+            seq.append([(signals[idx], signal.value_at_time(t)) for (idx, signal) in enumerate(wellen_signals)])
 
         return seq
 
     def get_last_value(self, signal: str) -> int:
-        return self.as_int(signal, self.max_clock)
+        return self.waveform.get_signal_from_path(signal).value_at_time(self.max_clock)
 
     def get_high_rate(self, signal: str) -> float:
         count = 0
@@ -39,26 +54,30 @@ class CPUWaveform:
             previous_t = t
         return count / self.clock_count
 
-    def as_int(self, signal: str, time: int) -> int:
-        return self.waveform.get_signal_from_path(signal).value_at_time(time)
+    def compare_signals(self, other: Self, signals: list[str], display_diff: bool = False) -> bool:
+        if display_diff:
+            # more fine-grained comparison
+            self_signals = self.get_signals_per_clk(signals)
+            other_signals = other.get_signals_per_clk(signals)
 
-    def compare_signals(self, other: Self, signals: list[str]) -> bool:
-        self_signals = self.get_signals(signals)
-        other_signals = other.get_signals(signals)
+            if len(self_signals) != len(other_signals):
+                pass
 
-        if len(self_signals) != len(other_signals):
-            pass
-
-        for (idx, values) in enumerate(self_signals):
-            values2 = other_signals[idx]
-            if values != values2:
+            for (idx, values) in enumerate(self_signals):
+                values2 = other_signals[idx]
                 # TODO: compare on individual signals
-                print(f"Mismatch at instruction #{idx}")
-                print("First values:", values)
-                print("Second values:", values2)
-                return False
-
-        return True
+                if values != values2:
+                    print(f"Mismatch at cycle #{idx}")
+                    for (idx, val) in enumerate(values):
+                        if values[idx] != values2[idx]:
+                            print(f"First value: {val}")
+                            print(f"Second value: {values2[idx]}")
+                    return False
+            return True
+        else:
+            self_signals = self.get_all_signal_values(signals)
+            other_signals = other.get_all_signal_values(signals)
+            return self_signals == other_signals
 
 
     def liberal_security_filter(self) -> list[str]:
@@ -100,7 +119,7 @@ class CPUWaveform:
         all_signals = [s for s in all_signals if "TOP.Core.pipeline" in s]
 
         # Filter out signals related to data
-        # #TODO: perhaps too coarse grained (I did not check carefully that all signals are fine to filter out)
+        # TODO: perhaps too coarse grained (I did not check carefully that all signals are fine to filter out)
         data_patterns = re.compile(r'.*data.*|.*DATA.*|.*Data.*|.*writeValue.*')
 
         # Filter out cache signals for data
