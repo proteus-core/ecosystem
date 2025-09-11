@@ -49,6 +49,9 @@ public:
         auto memoryBytes =
             std::vector<unsigned char>{std::istreambuf_iterator<char>(ifs), {}};
 
+        assert((memoryBytes.size() > 0) &&
+               "Memory file does not exist or is empty");
+
         assert((memoryBytes.size() % 4 == 0) &&
                "Memory does not contain a multiple of words");
 
