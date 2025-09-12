@@ -1,0 +1,61 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Fri Sep 12 09:29:35 2025
+[*]
+[dumpfile] "../core/sim.fst"
+[dumpfile_mtime] "Wed Sep 10 19:31:52 2025"
+[dumpfile_size] 67492
+[savefile] "/home/marton/code/ecosystem/gtkwave/proteus-i.gtkw"
+[timestart] 0
+[size] 1886 1033
+[pos] -1 -1
+*-4.000000 78 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.Core.
+[treeopen] TOP.Core.pipeline.
+[treeopen] TOP.Core.pipeline.writeback.
+[sst_width] 278
+[signals_width] 199
+[sst_expanded] 1
+[sst_vpaned_height] 567
+@28
+TOP.Core.pipeline.clk
+@200
+-fetch
+@28
+TOP.Core.pipeline.fetch.arbitration_isValid
+@4022
+^>1 ./disas.py
+TOP.Core.pipeline.fetch.out_IR[31:0]
+@200
+-decode
+@28
+TOP.Core.pipeline.decode.arbitration_isValid
+@4022
+^>1 ./disas.py
+TOP.Core.pipeline.decode.in_IR[31:0]
+@200
+-exe
+@28
+TOP.Core.pipeline.execute.arbitration_isValid
+@4022
+^>1 ./disas.py
+TOP.Core.pipeline.execute.in_IR[31:0]
+@200
+-mem
+@28
+TOP.Core.pipeline.memory.arbitration_isValid
+@4022
+^>1 ./disas.py
+TOP.Core.pipeline.memory.in_IR[31:0]
+@200
+-writeback
+@28
+TOP.Core.pipeline.writeback.arbitration_isValid
+@4022
+^>1 ./disas.py
+TOP.Core.pipeline.writeback.in_IR[31:0]
+@28
+TOP.Core.pipeline.writeback.in_RD_DATA_VALID
+[pattern_trace] 1
+[pattern_trace] 0

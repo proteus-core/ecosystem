@@ -10,6 +10,8 @@
 #include "kernel_stat.h"
 #include "interrupts.h"
 
+extern __attribute__((noreturn)) void _halt();
+
 #define STDIN_BUF_SIZE 256
 
 static uint8_t stdin_buf[STDIN_BUF_SIZE];
@@ -145,11 +147,15 @@ long sys_brk(void* addr)
     return -1;
 }
 
+static void sys_exit(int status)
+{
+    printf("Exiting with status %d\n", status);
+    _halt();
+}
+
 __attribute__((noreturn)) static void unsupported_syscall(long n)
 {
     printf("Unsupported syscall: %li\n", n);
-
-    extern __attribute__((noreturn)) void _halt();
     _halt();
 }
 
@@ -169,6 +175,8 @@ long syscall(long a0, long a1, long a2, long a3, long a4, long a5, long _, long 
             return sys_fstat(a0, (struct kernel_stat*)a1);
         case SYS_brk:
             return sys_brk((void*)a0);
+        case SYS_exit:
+            sys_exit(a0);
         default:
             unsupported_syscall(n);
     }
@@ -178,4 +186,3 @@ __attribute__((constructor)) static void init_syscalls()
 {
     init_stdin();
 }
-
