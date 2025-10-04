@@ -33,7 +33,7 @@ CLANGFLAGS += $(COMMONCFLAGS)
 CLANGFLAGS += --target=riscv32
 CLANGFLAGS += -march=rv32im
 
-RISCV_PREFIX ?= riscv32-unknown-linux-gnu
+RISCV_PREFIX ?= riscv64-unknown-elf
 OBJCOPY = $(RISCV_PREFIX)-objcopy
 GCC = $(RISCV_PREFIX)-gcc
 

@@ -1,17 +1,23 @@
-TOOLCHAIN_PREFIX = riscv32-unknown-elf
-CC = $(TOOLCHAIN_PREFIX)-gcc
-AS = $(TOOLCHAIN_PREFIX)-as
-OBJDUMP = $(TOOLCHAIN_PREFIX)-objdump
-OBJCOPY = $(TOOLCHAIN_PREFIX)-objcopy
-AR = $(TOOLCHAIN_PREFIX)-ar
+RISCV_PREFIX ?= riscv64-unknown-elf
+64BIT ?= 0
+ARCHFLAGS ?= -march=rv32im_zicsr_zicond -mabi=ilp32
+KERNEL_DIR ?= .
 
-ARCHFLAGS ?= -march=rv32im_zicsr -mabi=ilp32
+ifeq ($(64BIT),1)
+ARCHFLAGS = -march=rv64im_zicsr_zicond -mabi=lp64
+endif
+
+CC = $(RISCV_PREFIX)-gcc
+AS = $(RISCV_PREFIX)-as
+OBJDUMP = $(RISCV_PREFIX)-objdump
+OBJCOPY = $(RISCV_PREFIX)-objcopy
+AR = $(RISCV_PREFIX)-ar
+
 ASFLAGS = $(ARCHFLAGS)
 CFLAGS = -Wall -O2 -I$(KERNEL_DIR) $(EXTRA_CFLAGS) $(ARCHFLAGS)
 LDFLAGS = $(ARCHFLAGS)
 
-KERNEL_DIR ?= .
-KERNEL_OBJECTS = $(KERNEL_DIR)/boot.o $(KERNEL_DIR)/trap.o $(KERNEL_DIR)/syscalls.o $(KERNEL_DIR)/interrupts.o $(KERNEL_DIR)/exceptions.o $(KERNEL_DIR)/performance.o 
+KERNEL_OBJECTS = $(KERNEL_DIR)/boot.o $(KERNEL_DIR)/trap.o $(KERNEL_DIR)/syscalls.o $(KERNEL_DIR)/interrupts.o $(KERNEL_DIR)/exceptions.o $(KERNEL_DIR)/performance.o
 KERNEL_LIB_NAME = kernel.a
 KERNEL_LIB = $(KERNEL_DIR)/$(KERNEL_LIB_NAME)
 KERNEL_GENERATED_FILES = $(KERNEL_OBJECTS) $(KERNEL_LIB)

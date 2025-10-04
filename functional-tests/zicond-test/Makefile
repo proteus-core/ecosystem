@@ -1,9 +1,14 @@
+RISCV_PREFIX ?= riscv64-unknown-elf
+CC = $(RISCV_PREFIX)-gcc
+LD = $(RISCV_PREFIX)-gcc
+OBJCOPY = $(RISCV_PREFIX)-objcopy
+
 %.elf: %.s
-	riscv32-none-elf-gcc -mabi=ilp32 -march=rv32im_zicsr_zicond -c -o $@ $<
-	riscv32-none-elf-gcc -mabi=ilp32 -march=rv32im_zicsr_zicond -ffreestanding -nostdlib -T ../tests.ld -o $@ $<
+	$(CC) -mabi=ilp32 -march=rv32im_zicsr_zicond -c -o $@ $<
+	$(CC) -mabi=ilp32 -march=rv32im_zicsr_zicond -ffreestanding -nostdlib -T ../tests.ld -o $@ $<
 
 %.ihex: %.elf
-	riscv32-none-elf-objcopy -O ihex $< $@
+	$(OBJCOPY) -O ihex $< $@
 
 %.bin: %.elf
-	riscv32-none-elf-objcopy -O binary $< $@
+	$(OBJCOPY) -O binary $< $@

@@ -1,3 +1,8 @@
+CORE ?= riscv.CoreExtMem
+BUILD_CORE ?= 1
+64BIT ?= 0
+RISCV_PREFIX ?= riscv64-unknown-elf
+
 TESTS_DIR = $(abspath .)
 BASE_DIR = $(abspath $(TESTS_DIR)/../core)
 RISCV_TESTS_DIR = $(TESTS_DIR)/riscv-tests
@@ -5,11 +10,7 @@ ISA_TESTS_DIR = $(RISCV_TESTS_DIR)/isa
 BUILD_DIR = $(TESTS_DIR)/build
 SIM_DIR = $(abspath $(TESTS_DIR)/../simulation)
 SIM_EXE = $(SIM_DIR)/build/sim
-CORE ?= riscv.CoreExtMem
-BUILD_CORE ?= 1
-IS64 ?= 0
 
-RISCV_PREFIX ?= riscv32-unknown-elf
 CC = $(RISCV_PREFIX)-gcc
 LD = $(RISCV_PREFIX)-gcc
 OBJCOPY = $(RISCV_PREFIX)-objcopy
@@ -25,9 +26,9 @@ endif
 
 TEST_DIRS ?= $(ISA_TESTS_DIR)/rv32ui $(ISA_TESTS_DIR)/rv32mi $(ISA_TESTS_DIR)/rv32um $(TESTS_DIR)/zicond-test $(CUSTOM_TESTS_DIR)
 
-ifeq ($(IS64),1)
+ifeq ($(64BIT),1)
 TEST_DIRS = $(ISA_TESTS_DIR)/rv64ui $(ISA_TESTS_DIR)/rv64mi $(ISA_TESTS_DIR)/rv64um $(TESTS_DIR)/zicond-test $(CUSTOM_TESTS_DIR)
-ARCHFLAGS = -march=rv64imzicsr -mabi=lp64
+ARCHFLAGS = -march=rv64im_zicsr_zicond -mabi=lp64
 endif
 
 ALL_ISA_TESTS = $(shell find $(TEST_DIRS) -name '*.S')

@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 
 
-objdump = 'riscv32-unknown-elf-objdump'
+objdump = 'riscv64-unknown-elf-objdump'
 
 def output(line):
     print(line, flush=True)
