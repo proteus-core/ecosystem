@@ -4,7 +4,7 @@ ARCHFLAGS ?= -march=rv32im_zicsr_zicond -mabi=ilp32
 KERNEL_DIR ?= .
 
 ifeq ($(64BIT),1)
-ARCHFLAGS = -march=rv64im_zicsr_zicond -mabi=lp64
+ARCHFLAGS = -march=rv64im_zicsr_zicond -mabi=lp64 -mcmodel=medany
 endif
 
 CC = $(RISCV_PREFIX)-gcc
