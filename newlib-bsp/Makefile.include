@@ -1,10 +1,15 @@
 RISCV_PREFIX ?= riscv64-unknown-elf
 64BIT ?= 0
+DEBUG ?= 1
 ARCHFLAGS ?= -march=rv32im_zicsr_zicond -mabi=ilp32
 KERNEL_DIR ?= .
 
 ifeq ($(64BIT),1)
 ARCHFLAGS = -march=rv64im_zicsr_zicond -mabi=lp64 -mcmodel=medany
+endif
+
+ifeq ($(DEBUG),1)
+ARCHFLAGS += -g
 endif
 
 CC = $(RISCV_PREFIX)-gcc
