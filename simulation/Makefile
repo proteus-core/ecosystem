@@ -1,6 +1,6 @@
 CORE ?= riscv.CoreExtMem32
 
-BASE_DIR = ../core
+BASE_DIR ?= ../core
 BUILD_DIR = build
 TOPLEVEL_MODULE = Core
 VERILOG_FILE_NAME = $(TOPLEVEL_MODULE).v

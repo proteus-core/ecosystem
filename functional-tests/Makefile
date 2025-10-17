@@ -8,7 +8,7 @@ BASE_DIR = $(abspath $(TESTS_DIR)/../core)
 RISCV_TESTS_DIR = $(TESTS_DIR)/riscv-tests
 ISA_TESTS_DIR = $(RISCV_TESTS_DIR)/isa
 BUILD_DIR = $(TESTS_DIR)/build
-SIM_DIR = $(abspath $(TESTS_DIR)/../simulation)
+SIM_DIR ?= $(abspath $(TESTS_DIR)/../simulation)
 SIM_EXE = $(SIM_DIR)/build/sim
 
 CC = $(RISCV_PREFIX)-gcc
