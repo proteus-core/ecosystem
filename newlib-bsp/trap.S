@@ -19,15 +19,10 @@ _init_traps:
     ret
 
 _trap_handler:
-    csrw mscratch, sp
     addi sp, sp, -CONTEXT_SIZE
 
     /* Save trap frame */
     SREG x1, 1*WORD_SIZE(sp)
-    csrr x1, mscratch
-    SREG x1, 2*WORD_SIZE(sp)
-    SREG x3, 3*WORD_SIZE(sp)
-    SREG x4, 4*WORD_SIZE(sp)
     SREG x5, 5*WORD_SIZE(sp)
     SREG x6, 6*WORD_SIZE(sp)
     SREG x7, 7*WORD_SIZE(sp)
@@ -65,8 +60,6 @@ _trap_handler:
 
 _trap_return:
     LREG x1, 1*WORD_SIZE(sp)
-    LREG x3, 3*WORD_SIZE(sp)
-    LREG x4, 4*WORD_SIZE(sp)
     LREG x5, 5*WORD_SIZE(sp)
     LREG x6, 6*WORD_SIZE(sp)
     LREG x7, 7*WORD_SIZE(sp)
@@ -94,12 +87,12 @@ _trap_return:
     LREG x29, 29*WORD_SIZE(sp)
     LREG x30, 30*WORD_SIZE(sp)
     LREG x31, 31*WORD_SIZE(sp)
-    LREG x2, 2*WORD_SIZE(sp)
+    addi sp, sp, CONTEXT_SIZE
     mret
 
 _syscall_handler:
     jal syscall
-    SREG a0, 6 * WORD_SIZE(sp)
+    SREG a0, 10 * WORD_SIZE(sp)
     csrr t0, mepc
     addi t0, t0, 4
     csrw mepc, t0

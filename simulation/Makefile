@@ -1,4 +1,4 @@
-CORE ?= riscv.CoreExtMem
+CORE ?= riscv.CoreExtMem32
 
 BASE_DIR = ../core
 BUILD_DIR = build

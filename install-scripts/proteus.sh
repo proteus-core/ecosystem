@@ -4,5 +4,5 @@ set -ex
 
 git clone --recurse-submodules --branch main https://github.com/proteus-core/proteus.git core
 make -C simulation clean
-make -C simulation CORE=riscv.CoreDynamicExtMem
-make -C functional-tests CORE=riscv.CoreDynamicExtMem BUILD_CORE=0 RISCV_PREFIX=riscv64-unknown-elf
+make -C simulation CORE=riscv.CoreDynamicExtMem32
+make -C functional-tests CORE=riscv.CoreDynamicExtMem32 BUILD_CORE=0 RISCV_PREFIX=riscv64-unknown-elf

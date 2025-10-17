@@ -1,4 +1,4 @@
-CORE ?= riscv.CoreExtMem
+CORE ?= riscv.CoreExtMem32
 BUILD_CORE ?= 1
 64BIT ?= 0
 RISCV_PREFIX ?= riscv64-unknown-elf
