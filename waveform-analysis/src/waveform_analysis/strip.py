@@ -109,8 +109,7 @@ def get_parser():
     )
     return parser.parse_args()
 
-
-if __name__ == '__main__':
+def main():
     args = get_parser()
     start = datetime.now()
     interface = interface_parser.InterfaceParser(args.interface)

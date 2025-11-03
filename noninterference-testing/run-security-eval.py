@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import sys
 import argparse
 
 from waveform_analysis.logger import log
@@ -8,6 +7,7 @@ from waveform_analysis.signal_extractor import CPUWaveform
 from waveform_analysis.interface_parser import proteus_o_parser
 
 policy_signals = None
+
 
 def signals_based_on_policy(waveform: CPUWaveform, policy: str) -> list[str]:
     if policy == "liberal":
@@ -19,6 +19,7 @@ def signals_based_on_policy(waveform: CPUWaveform, policy: str) -> list[str]:
     else:
         raise NotImplementedError()
 
+
 def check_all_inputs(policy: str, filename: str, exp_numbers: list[str], display_diff: bool = False) -> int:
     global policy_signals
 
@@ -28,11 +29,12 @@ def check_all_inputs(policy: str, filename: str, exp_numbers: list[str], display
     if policy_signals is None:
         policy_signals = signals_based_on_policy(base_waveform, policy)
     for input_case in exp_numbers[1:]:
-        if not base_waveform.compare_signals(CPUWaveform(f"{filename}_{input_case}.vcd", proteus_o_parser), policy_signals, display_diff):
+        if not base_waveform.compare_signals(CPUWaveform(f"{filename}_{input_case}.vcd", proteus_o_parser), policy_signals, display_diff=display_diff):
             log.debug(f"!--- Programs {filename} is insecure ---!")
             return 1
     log.debug(f"!--- Program {filename} is secure ---!")
     return 0
+
 
 def check_all_combinations(
     # comparator: Comparator,
@@ -57,7 +59,8 @@ def check_all_combinations(
                 file = f"{base_file}_{fence}_{leak_sink}"
                 insecure_programs_total += 1
                 if check_all_inputs(policy, file, exp_numbers) == 0:
-                    log.warning(f"!--- Programs {file} should be insecure :( ---!")
+                    log.warning(
+                        f"!--- Programs {file} should be insecure :( ---!")
                 else:
                     log.info(f"!--- Programs {file} is insecure :) ---!")
                     insecure_programs_found_insecure += 1
@@ -72,20 +75,27 @@ def check_all_combinations(
                     secure_programs_found_secure += 1
     print("")
 
-    log.result(f"Secure programs: {secure_programs_found_secure}/{secure_programs_total} Insecure programs: {insecure_programs_found_insecure}/{insecure_programs_total}")
+    log.result(
+        f"Secure programs: {secure_programs_found_secure}/{secure_programs_total} Insecure programs: {insecure_programs_found_insecure}/{insecure_programs_total}")
+
 
 def debug(policy: str, target: str) -> None:
-    check_all_inputs(policy, f"{benchmark_path}/vcd/{target}", ["EXP0", "EXP1"], display_diff=True)
+    check_all_inputs(
+        policy, f"{benchmark_path}/vcd/{target}", ["EXP0", "EXP1"], display_diff=True)
+
 
 def parse_arguments(benchmarks: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run security evaluation on benchmarks.")
-    parser.add_argument("--program_path", type=str, default="./programs", help="Path to the program directory (default: ./programs)")
+    parser = argparse.ArgumentParser(
+        description="Run security evaluation on benchmarks.")
+    parser.add_argument("--program_path", type=str, default="./programs",
+                        help="Path to the program directory (default: ./programs)")
     parser.add_argument(
         "--program_name",
         type=str,
         choices=benchmarks + ["all"],
         default="all",
-        help="Name of the benchmark to run (default: all). Options: " + ", ".join(benchmarks + ["all"])
+        help="Name of the benchmark to run (default: all). Options: " +
+        ", ".join(benchmarks + ["all"])
     )
     # Choose security comparator
     parser.add_argument(
@@ -102,6 +112,7 @@ def parse_arguments(benchmarks: list[str]) -> argparse.Namespace:
     )
     args = parser.parse_args()
     return args
+
 
 def main() -> None:
     all_bench = ['pht-test1', 'pht-test2', 'psf-test1', 'ssb-test1']
@@ -126,7 +137,9 @@ def main() -> None:
     else:
         benchs = [benchmark]
 
-    check_all_combinations(args.compare_signals, benchs, secure_defenses, insecure_defenses, leakage_sinks, exp_numbers)
+    check_all_combinations(args.compare_signals, benchs, secure_defenses,
+                           insecure_defenses, leakage_sinks, exp_numbers)
+
 
 if __name__ == "__main__":
     main()
