@@ -56,11 +56,6 @@ jobs:
         with:
           image: ecosystem:latest
           run: |
-            cd /ecosystem/simulation
-            make CORE=riscv.CoreExtMem32 && cp build/sim build/sim-32-i
-            make CORE=riscv.CoreDynamicExtMem32 && cp build/sim build/sim-32-o
-            make CORE=riscv.CoreExtMem64 && cp build/sim build/sim-64-i
-            make CORE=riscv.CoreDynamicExtMem64 && cp build/sim build/sim-64-o
             cd /ecosystem/newlib-bsp
             make main.bin && mv main.bin main-32.bin
             make clean && make 64BIT=1 main.bin && mv main.bin main-64.bin
@@ -77,7 +72,6 @@ jobs:
             cd /ecosystem
             cp simulation/build/sim-32-i simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 -C functional-tests
             cp simulation/build/sim-32-o simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 -C functional-tests
-            rm -rf functional-tests/build/
             cp simulation/build/sim-64-i simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 64BIT=1 -C functional-tests
             cp simulation/build/sim-64-o simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 64BIT=1 -C functional-tests
 
@@ -89,22 +83,29 @@ jobs:
             cd /ecosystem/benchmarks/spectreguard
             make && mv specBench.bin specBench-32.bin
             make clean && make 64BIT=1 && mv specBench.bin specBench-64.bin
-            ../simulation/build/sim-32-i specBench-32.bin
-            ../simulation/build/sim-32-o specBench-32.bin
-            ../simulation/build/sim-64-i specBench-64.bin
-            ../simulation/build/sim-64-o specBench-64.bin
+            ../../simulation/build/sim-32-i specBench-32.bin
+            ../../simulation/build/sim-32-o specBench-32.bin
+            ../../simulation/build/sim-64-i specBench-64.bin
+            ../../simulation/build/sim-64-o specBench-64.bin
 
       - name: Run non-interference test
         uses: addnab/docker-run-action@v3
         with:
           image: ecosystem:latest
-          run: "cd /ecosystem && make -C simulation CORE=riscv.CoreDynamicExtMem32 && . /ecosystem/waveform-analysis/.venv/bin/activate && cd /ecosystem/noninterference-testing/ && make -C programs vcd USECLANG=0 RISCV_PREFIX=riscv64-unknown-elf SIM_EXE=/ecosystem/simulation/build/sim && ./run-security-eval.py"
+          run: |
+            cd /ecosystem
+            . /ecosystem/waveform-analysis/.venv/bin/activate
+            cd /ecosystem/noninterference-testing/
+            make -C programs vcd USECLANG=0 RISCV_PREFIX=riscv64-unknown-elf SIM_EXE=/ecosystem/simulation/build/sim-32-o
+            ./run-security-eval.py
 
       - name: Run EVAL-HD
         uses: addnab/docker-run-action@v3
         with:
           image: ecosystem:latest
-          run: "cd /ecosystem/synthesis && ./run-yosys.sh"
+          run: |
+            cd /ecosystem/synthesis
+            ./run-yosys.sh
 
   push-image:
     name: Push Docker image

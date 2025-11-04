@@ -62,3 +62,6 @@ $(SIM_EXE): $(FORCE)
 %.pass: %.bin $(SIM_EXE)
 	cd $(BASE_DIR); $(SIM_EXE) $<
 	touch $@
+
+clean:
+	rm -rf $(BUILD_DIR)
