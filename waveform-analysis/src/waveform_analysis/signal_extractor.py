@@ -131,7 +131,7 @@ class CPUWaveform:
             r'.*cache_ibus_cache_\d+_\d+_tag',
             r'.*cache_ibus_cache_\d+_\d+_valid',
             # DCache metadata
-            r'.*cache_dbus_cache_\d+_\+d_tag',
+            r'.*cache_dbus_cache_\d+_\d+_tag',
             r'.*cache_dbus_cache_\d+_\d+_valid',
             # Control signals
             r'.*ready',
