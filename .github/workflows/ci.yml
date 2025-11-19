@@ -48,6 +48,7 @@ jobs:
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: false
+          docker-images: false
 
       - name: Check out repository
         uses: actions/checkout@v2
