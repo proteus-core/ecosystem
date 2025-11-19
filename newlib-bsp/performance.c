@@ -1,7 +1,7 @@
 #include "performance.h"
 #include <stdint.h>
 
-
+#if __riscv_xlen == 32
 uint64_t rdcycle()
 {
     uint32_t rdcycleh;
@@ -31,6 +31,23 @@ uint64_t rdinstret()
     uint64_t instret = (uint64_t) rdinstreth << 32 | rdinstret;
     return instret;
 }
+#elif __riscv_xlen == 64
+uint64_t rdcycle()
+{
+    uint64_t cycles;
+    asm volatile ("rdcycle %0" : "=r"(cycles));
+    return cycles;
+}
+
+uint64_t rdinstret()
+{
+    uint64_t instret;
+    asm volatile ("rdinstret %0" : "=r"(instret));
+    return instret;
+}
+#else
+#error "Unexpected xlen!"
+#endif
 
 void sleep(uint64_t sleep_time)
 {   

@@ -6,9 +6,14 @@ Specifically, it checks that observable microarchitectural components (e.g. exec
 
 We use noninterference testing to test security defenses implemented in Proteus. Concretely, we (1) generate sets of insecure programs that fail noninterference testing (2) secure these programs with hardware defenses and (3) make sure that secure versions pass noninterference testing.
 
+> [!WARNING]
+> The rest of this documentation is outdated and will be updated soon™.
+> Try `--help` on the script you are interested in running.
 
 ## Overview
+
 ### Program generation
+
 The first step for noninterference testing is to generate a set of insecure and corresponding secure programs.
 
 In the directory [./programs](./programs), we provide sample programs covering multiple Spectre variants (PHT, SSB, PSF) that are vulnerable on Proteus.
@@ -19,6 +24,7 @@ Concretely, we cover different defenses (`NOFENCE`, `FULLFENCE`) and leak secret
 Finally, each program is compiled with two secret values that should trigger distinct microarchitectural leakage on the insecure versions.
 
 ### Security evaluation
+
 The security evaluation runs pairs of programs with different secrets and monitors a set of selected signals.
 The set of selected signals (conservative or liberal) are defined in [signals.py](./vcd_scripts/signals.py).
 
@@ -28,26 +34,35 @@ If the set of selected signals match, then the program is secure; otherwise, the
 TODO: the same principle can be applied for correctness evaluation (see [run-correctness-eval.py](./run-correctness-eval.py)) but, for now, this script is buggy.
 
 ## Run security evaluation
+
 ### Compile programs
+
 The first step is to compile the programs. Make sure the toolchain path is correct; the default is [../llvm-project](../llvm-project).
+
 ```
 make -C programs all
 ```
+
 Compiled programs are in [./programs/build/](./programs/build/).
 
 Optionally, you can create objdump files to look at the assembly code:
+
 ```
 make -C programs objdump
 ```
 
 ### Run simulations
-The second step is to run the simulator to get the vcd files of these programs. Make sure the path of Proteus is correct; the default is [../proteus](../proteus). Additionally, make sure Proteus is compiled with the DynamicCore (`make -C sim CORE=riscv.CoreDynamicExtMem`).
+
+The second step is to run the simulator to get the vcd files of these programs. Make sure the path of Proteus is correct; the default is [../proteus](../proteus). Additionally, make sure Proteus is compiled with the DynamicCore (`make -C sim CORE=riscv.CoreDynamicExtMem32`).
+
 ```
 make -C programs vcd USECLANG=0 RISCV_PREFIX=riscv64-unknown-elf SIM_EXE=/ecosystem/simulation/build/sim
 ```
+
 Resulting vcd files are in [./programs/vcd/](./programs/vcd/).
 
 ### Run security evaluation
+
 The final step is to run the security evaluation:
 ```
 python ./run-security-evaluation.sh

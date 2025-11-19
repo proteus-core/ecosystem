@@ -5,6 +5,10 @@ Starting from Proteus version v25.09, using this repository is strongly recommen
 
 For detailed commands that run different evaluations, we recommend checking the [scripts](.github/workflows/ci.yml) that run in GitHub CI.
 
+> [!NOTE]
+> The documentation of the ecosystem is still very much incomplete and might be outdated at times.
+> We are working on updating and refining it, but contributions for fixes or extensions of the documentation are very much welcome!
+
 ## Setup
 
 It is recommended to use the Docker-based setup for working with Proteus.
