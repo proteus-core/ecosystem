@@ -1,0 +1,14 @@
+SDK_BIN ?= ~/cheri/output/sdk/bin
+CC = $(SDK_BIN)/clang
+LD = $(SDK_BIN)/clang
+CFLAGS += -Dmbadaddr=mtval -Dsptbr=satp -g -B$(SDK_BIN)
+
+ifeq ($(64BIT),1)
+ARCHFLAGS = -target riscv64 -march=rv64im_xcheri -mabi=lp64
+CORE = riscv.plugins.cheri.CoreExtMem64
+else
+ARCHFLAGS = -target riscv32 -march=rv32im_xcheri -mabi=ilp32
+CORE = riscv.plugins.cheri.CoreExtMem32
+endif
+
+LDFLAGS = $(ARCHFLAGS) -g -fuse-ld=lld --ld-path=$(SDK_BIN)/ld.lld -B$(SDK_BIN) -static
