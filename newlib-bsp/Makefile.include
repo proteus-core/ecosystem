@@ -2,7 +2,7 @@ RISCV_PREFIX ?= riscv64-unknown-elf
 64BIT ?= 0
 DEBUG ?= 1
 ARCHFLAGS ?= -march=rv32im_zicsr_zicond -mabi=ilp32
-KERNEL_DIR ?= .
+BSP_DIR ?= .
 
 ifeq ($(64BIT),1)
 ARCHFLAGS = -march=rv64im_zicsr_zicond -mabi=lp64 -mcmodel=medany
@@ -19,21 +19,21 @@ OBJCOPY = $(RISCV_PREFIX)-objcopy
 AR = $(RISCV_PREFIX)-ar
 
 ASFLAGS = $(ARCHFLAGS)
-CFLAGS = -Wall -O2 -I$(KERNEL_DIR) $(EXTRA_CFLAGS) $(ARCHFLAGS)
+CFLAGS = -Wall -O2 -I$(BSP_DIR) $(EXTRA_CFLAGS) $(ARCHFLAGS)
 LDFLAGS = $(ARCHFLAGS)
 
-KERNEL_OBJECTS = $(KERNEL_DIR)/boot.o $(KERNEL_DIR)/trap.o $(KERNEL_DIR)/syscalls.o $(KERNEL_DIR)/interrupts.o $(KERNEL_DIR)/exceptions.o $(KERNEL_DIR)/performance.o
-KERNEL_LIB_NAME = kernel.a
-KERNEL_LIB = $(KERNEL_DIR)/$(KERNEL_LIB_NAME)
-KERNEL_GENERATED_FILES = $(KERNEL_OBJECTS) $(KERNEL_LIB)
+BSP_OBJECTS = $(BSP_DIR)/boot.o $(BSP_DIR)/trap.o $(BSP_DIR)/syscalls.o $(BSP_DIR)/interrupts.o $(BSP_DIR)/exceptions.o $(BSP_DIR)/performance.o
+BSP_LIB_NAME = libproteus.a
+BSP_LIB = $(BSP_DIR)/$(BSP_LIB_NAME)
+BSP_GENERATED_FILES = $(BSP_OBJECTS) $(BSP_LIB)
 
-$(KERNEL_LIB_NAME): $(KERNEL_LIB)
+$(BSP_LIB_NAME): $(BSP_LIB)
 
-$(KERNEL_LIB): $(KERNEL_OBJECTS)
+$(BSP_LIB): $(BSP_OBJECTS)
 	$(AR) rcs $@ $^
 
-%.elf: %.o $(EXTRA_OBJECTS) $(KERNEL_LIB)
-	$(CC) $(CFLAGS) -T $(KERNEL_DIR)/link.ld -o $@ $^
+%.elf: %.o $(EXTRA_OBJECTS) $(BSP_LIB)
+	$(CC) $(CFLAGS) -T $(BSP_DIR)/link.ld -o $@ $^
 
 %.ihex: %.elf
 	$(OBJCOPY) -O ihex $^ $@
