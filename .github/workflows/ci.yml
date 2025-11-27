@@ -109,7 +109,6 @@ jobs:
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-32-i
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-32-o
             make clean && make 64BIT=1
-            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-64-i
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-64-o
 
