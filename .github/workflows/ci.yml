@@ -137,6 +137,12 @@ jobs:
     # only run when build and ci-tests both succeed
     needs: [build-docker, ci-tests ]
     steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          docker-images: false
+
       - name: Download Docker artifact
         uses: actions/download-artifact@v4
         with:
