@@ -24,7 +24,6 @@ all: elf bin
 
 dirs:
 	@mkdir -p $(BUILD_DIR)
-	@mkdir -p $(SIM_DIR)
 
 elf: dirs $(ELF_TARGETS)
 bin: dirs $(BIN_TARGETS)

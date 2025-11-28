@@ -20,30 +20,28 @@ def signals_based_on_policy(waveform: CPUWaveform, policy: str) -> list[str]:
         raise NotImplementedError()
 
 
-def check_all_inputs(policy: str, filename: str, exp_numbers: list[str], display_diff: bool = False) -> int:
+def secure_for_all_inputs(policy: str, filename: str, exp_postfixes: list[str], display_diff: bool = False) -> bool:
     global policy_signals
 
-    base = exp_numbers[0]
+    base = exp_postfixes[0]
     log.debug(f"+ Check all input for {filename} with base={base}")
     base_waveform = CPUWaveform(f"{filename}_{base}.vcd", proteus_o_parser)
     if policy_signals is None:
         policy_signals = signals_based_on_policy(base_waveform, policy)
-    for input_case in exp_numbers[1:]:
+    for input_case in exp_postfixes[1:]:
         if not base_waveform.compare_signals(CPUWaveform(f"{filename}_{input_case}.vcd", proteus_o_parser), policy_signals, display_diff=display_diff):
-            log.debug(f"!--- Programs {filename} is insecure ---!")
-            return 1
-    log.debug(f"!--- Program {filename} is secure ---!")
-    return 0
+            return False
+    return True
 
 
 def check_all_combinations(
-    # comparator: Comparator,
+    path: str,
     policy: str,
     benches: list[str],
     secure_defenses: list[str],
     insecure_defenses: list[str],
     leakage_sinks: list[str],
-    exp_numbers: list[str]
+    exp_postfixes: list[str]
 ) -> None:
     secure_programs_total = 0
     secure_programs_found_secure = 0
@@ -51,14 +49,14 @@ def check_all_combinations(
     insecure_programs_found_insecure = 0
 
     for bench in benches:
-        base_file = f"{benchmark_path}/vcd/{bench}"
+        base_file = f"{path}/vcd/{bench}"
         print(f"====== Running experiment for {base_file}")
 
         for leak_sink in leakage_sinks:
             for fence in insecure_defenses:
                 file = f"{base_file}_{fence}_{leak_sink}"
                 insecure_programs_total += 1
-                if check_all_inputs(policy, file, exp_numbers) == 0:
+                if secure_for_all_inputs(policy, file, exp_postfixes):
                     log.warning(
                         f"!--- Programs {file} should be insecure :( ---!")
                 else:
@@ -68,7 +66,7 @@ def check_all_combinations(
             for fence in secure_defenses:
                 file = f"{base_file}_{fence}_{leak_sink}"
                 secure_programs_total += 1
-                if check_all_inputs(policy, file, exp_numbers) == 1:
+                if not secure_for_all_inputs(policy, file, exp_postfixes):
                     log.error(f"!--- Programs {file} should be secure :( ---!")
                 else:
                     log.info(f"!--- Programs {file} is secure :) ---!")
@@ -79,30 +77,67 @@ def check_all_combinations(
         f"Secure programs: {secure_programs_found_secure}/{secure_programs_total} Insecure programs: {insecure_programs_found_insecure}/{insecure_programs_total}")
 
 
-def debug(policy: str, target: str) -> None:
-    check_all_inputs(
-        policy, f"{benchmark_path}/vcd/{target}", ["EXP0", "EXP1"], display_diff=True)
+def debug(path: str, policy: str, target: str) -> None:
+    secure_for_all_inputs(
+        policy, f"{path}/vcd/{target}", ["EXP0", "EXP1"], display_diff=True)
 
 
-def parse_arguments(benchmarks: list[str]) -> argparse.Namespace:
+def parse_arguments() -> argparse.Namespace:
+    benchmarks = ['pht-test1', 'pht-test2', 'psf-test1', 'ssb-test1']
+    secure_defenses = ["FULLFENCE"]
+    insecure_defenses = ["NOFENCE"]
+    leakage_sinks = ["LEAKLOAD", "LEAKSTORE", "LEAKBR", "LEAKJMP", "LEAKDIV"]
+    exp_postfixes = ["EXP1", "EXP0"]
+
     parser = argparse.ArgumentParser(
         description="Run security evaluation on benchmarks.")
     parser.add_argument("--program_path", type=str, default="./programs",
                         help="Path to the program directory (default: ./programs)")
     parser.add_argument(
-        "--program_name",
+        "--benchmarks",
         type=str,
-        choices=benchmarks + ["all"],
-        default="all",
-        help="Name of the benchmark to run (default: all). Options: " +
-        ", ".join(benchmarks + ["all"])
+        nargs='*',
+        choices=benchmarks,
+        default=benchmarks,
+        help="Name of the benchmark to run (leave out to include all)."
     )
-    # Choose security comparator
     parser.add_argument(
         "--compare-signals",
         choices=["conservative", "liberal"],
         default="liberal",
         help="Choose which signals to compare: conservative (all signals except selected non-observable signals) or liberal (only selected observable signals) (default: liberal)"
+    )
+    parser.add_argument(
+        "--secure-defenses",
+        type=str,
+        nargs='*',
+        choices=secure_defenses,
+        default=secure_defenses,
+        help="Secure defense configurations (leave out to include all)."
+    )
+    parser.add_argument(
+        "--insecure-defenses",
+        type=str,
+        nargs='*',
+        choices=insecure_defenses,
+        default=insecure_defenses,
+        help="Insecure defense configurations (leave out to include all)."
+    )
+    parser.add_argument(
+        "--leakage-sinks",
+        type=str,
+        nargs='*',
+        choices=leakage_sinks,
+        default=leakage_sinks,
+        help="Leakage sink configurations (leave out to include all)."
+    )
+    parser.add_argument(
+        "--experiment-postfixes",
+        type=str,
+        nargs='*',
+        choices=exp_postfixes,
+        default=exp_postfixes,
+        help="Experiment postfix identifiers (leave out to include all)."
     )
     parser.add_argument(
         "--debug",
@@ -115,31 +150,20 @@ def parse_arguments(benchmarks: list[str]) -> argparse.Namespace:
 
 
 def main() -> None:
-    all_bench = ['pht-test1', 'pht-test2', 'psf-test1', 'ssb-test1']
-    args = parse_arguments(all_bench)
-
-    global benchmark_path
-    benchmark_path = args.program_path
-    benchmark = args.program_name
+    args = parse_arguments()
 
     if args.debug:
-        debug(args.compare_signals, args.debug)
+        debug(
+            path=args.program_path,
+            policy=args.compare_signals,
+            target=args.debug)
         return
 
-    # Experiment configuration
-    secure_defenses = ["FULLFENCE"]
-    insecure_defenses = ["NOFENCE"]
-    leakage_sinks = ["LEAKLOAD", "LEAKSTORE", "LEAKBR", "LEAKJMP", "LEAKDIV"]
-    exp_numbers = ["EXP1", "EXP0"]
-
-    if benchmark == "all":
-        benchs = all_bench
-    else:
-        benchs = [benchmark]
-
-    check_all_combinations(args.compare_signals, benchs, secure_defenses,
-                           insecure_defenses, leakage_sinks, exp_numbers)
-
-
-if __name__ == "__main__":
-    main()
+    check_all_combinations(
+        path=args.program_path,
+        policy=args.compare_signals,
+        benches=args.benchmarks,
+        secure_defenses=args.secure_defenses,
+        insecure_defenses=args.insecure_defenses,
+        leakage_sinks=args.leakage_sinks,
+        exp_postfixes=args.experiment_postfixes)

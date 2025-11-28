@@ -107,8 +107,8 @@ jobs:
             cd /ecosystem
             . /ecosystem/waveform-analysis/.venv/bin/activate
             cd /ecosystem/noninterference-testing/
-            make -C programs vcd USECLANG=0 RISCV_PREFIX=riscv64-unknown-elf SIM_EXE=/ecosystem/simulation/build/sim-32-o
-            ./run-security-eval.py
+            make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
+            waveform-security
 
       - name: Run EVAL-HD
         uses: addnab/docker-run-action@v3
