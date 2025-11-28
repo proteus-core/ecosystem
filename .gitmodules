@@ -4,3 +4,6 @@
 [submodule "functional-tests/riscv-tests"]
 	path = functional-tests/riscv-tests
 	url = https://github.com/riscv-software-src/riscv-tests.git
+[submodule "benchmarks/embench"]
+	path = benchmarks/embench
+	url = https://github.com/proteus-core/embench.git
