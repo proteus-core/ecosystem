@@ -27,28 +27,18 @@ Alternatively, you can build this image locally with the included [Dockerfile](.
 The container can be built with the following command:
 
 ```shell-session
-$ docker build -t ecosystem .
+$ docker compose up
 ```
 
-Additional build arguments can be added with the `--build-arg FLAG_NAME=true` argument, for example `INSTALL_TOOLCHAIN` to install the RISC-V GNU toolchain, `INSTALL_EVAL_HD` to install the hardware cost evaluation tool and `INSTALL_PROTEUS` to clone and install the Proteus core inside the container (instead of mounting it as a volume).
-Note that installing these extra tools will add a substantial amount of time to the build process (should quantify it later).
-
-```shell-session
-$ docker build -t ecosystem . --build-arg INSTALL_PROTEUS=true --build-arg INSTALL_EVAL_HD=true --build-arg INSTALL_TOOLCHAIN=true
-```
+Additional build arguments can be added in `docker-compose.yml`, for example `INSTALL_TOOLCHAIN` to install the RISC-V GNU toolchain, `INSTALL_EVAL_HD` to install the hardware cost evaluation tool and `INSTALL_PROTEUS` to clone and install the Proteus core inside the container (instead of mounting it as a volume).
+Note that installing these extra tools will add a substantial amount of time to the build process.
 
 ### Working with the container
 
 You can launch a container after building:
 
 ```shell-session
-$ docker run -it ecosystem
-```
-
-Optionally, you can attach the Proteus core directory as a volume, for example after cloning it to `core`:
-
-```shell-session
-$ docker run -v ./core:/ecosystem/core -it ecosystem
+$ docker compose run --remove-orphans ecosystem
 ```
 
 ### Non-container setup

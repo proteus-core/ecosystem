@@ -3,9 +3,9 @@ FROM ubuntu:24.04
 # Set to noninteractive mode
 ARG DEBIAN_FRONTEND=noninteractive
 
-ARG INSTALL_TOOLCHAIN
-ARG INSTALL_EVAL_HD
-ARG INSTALL_PROTEUS
+ARG INSTALL_TOOLCHAIN=false
+ARG INSTALL_EVAL_HD=false
+ARG INSTALL_PROTEUS=false
 RUN echo "Install RISC-V toolchain: ${INSTALL_TOOLCHAIN}"
 RUN echo "Install EVAL-HD: ${INSTALL_EVAL_HD}"
 RUN echo "Setup Proteus core: ${INSTALL_PROTEUS}"
