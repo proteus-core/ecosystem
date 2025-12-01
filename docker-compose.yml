@@ -15,4 +15,6 @@ services:
       - ./synthesis:/ecosystem/synthesis
       - ./noninterference-testing:/ecosystem/noninterference-testing
       - ./waveform-analysis:/ecosystem/waveform-analysis
+      - ./install-scripts:/ecosystem/install-scripts
+      - ./formal-verification:/ecosystem/formal-verification
     command: "/bin/bash"

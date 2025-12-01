@@ -1,27 +1,19 @@
-BASE_DIR = $(shell pwd)
-RISCV_DIR = $(BASE_DIR)/..
-RISCV_FORMAL_DIR = $(BASE_DIR)/riscv-formal
-CORE_DIR = $(RISCV_FORMAL_DIR)/cores/riscv
+BASE_DIR = $(shell pwd)/../..
+TARGET_DIR = $(BASE_DIR)/riscv-formal/cores/proteus/
 CORE ?= riscv.CoreFormal
 
 all: formal
 
-$(RISCV_DIR)/Core.v: FORCE
-	cd $(RISCV_DIR); sbt "runMain $(CORE)"
+Core.v: proteus.v
+	cd $(BASE_DIR)/core && sbt "runMain $(CORE)" && cp Core.v $(BASE_DIR)/formal-verification/riscv-formal/proteus.v
 
-setup: $(RISCV_DIR)/Core.v
-	mkdir -p $(CORE_DIR)
-	cp $< $(CORE_DIR)/riscv.v
-	cp checks.cfg wrapper.sv disasm.py $(CORE_DIR)
-	cd $(CORE_DIR); python3 $(RISCV_FORMAL_DIR)/checks/genchecks.py
+setup: Core.v
+	mkdir -p $(TARGET_DIR)
+	cp checks.cfg wrapper.sv proteus.v $(TARGET_DIR)
+	cd $(TARGET_DIR) && python3 ../../checks/genchecks.py
 
 formal: setup
-	$(MAKE) -C $(CORE_DIR)/checks
-	@echo "Failed tests:"
-	find $(CORE_DIR)/checks -name trace.vcd
+	make -C $(TARGET_DIR)/checks -j$(nproc)
 
 formal-%: setup
-	$(MAKE) -C $(CORE_DIR)/checks $(subst formal-,,$@)_ch0
-
-.PHONY: FORCE
-
+	$(MAKE) -C $(TARGET_DIR)/checks $(subst formal-,,$@)_ch0
