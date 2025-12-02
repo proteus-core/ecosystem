@@ -99,6 +99,19 @@ jobs:
             ../../simulation/build/sim-64-i specBench-64.bin
             ../../simulation/build/sim-64-o specBench-64.bin
 
+      - name: Run Embench benchmarks
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ecosystem:latest
+          run: |
+            cd /ecosystem/benchmarks/embench
+            make
+            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-32-i
+            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-32-o
+            make clean && make 64BIT=1
+            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-64-i
+            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-64-o
+
       - name: Run non-interference test
         uses: addnab/docker-run-action@v3
         with:
@@ -124,6 +137,12 @@ jobs:
     # only run when build and ci-tests both succeed
     needs: [build-docker, ci-tests ]
     steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          docker-images: false
+
       - name: Download Docker artifact
         uses: actions/download-artifact@v4
         with:

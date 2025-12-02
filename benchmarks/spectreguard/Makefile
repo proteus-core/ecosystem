@@ -1,4 +1,4 @@
-KERNEL_DIR = ../../newlib-bsp
+BSP_DIR = ../../newlib-bsp
 KREMLIB_INCLUDE_DIR = ./include/kremlib
 KREMLIN_INCLUDE_DIR = ./include
 
@@ -11,11 +11,11 @@ all: $(TARGET).bin $(TARGET).ihex $(TARGET).objdump
 
 $(TARGET).elf: Hacl_Chacha20.o
 
-include $(KERNEL_DIR)/Makefile.include
+include $(BSP_DIR)/Makefile.include
 
 $(TARGET).objdump: $(TARGET).elf
 	$(OBJDUMP) -d $^ > $@
 
 clean:
-	make -C $(KERNEL_DIR) clean
+	make -C $(BSP_DIR) clean
 	rm -f *.elf *.bin *.ihex *.o

@@ -117,7 +117,7 @@ We currently support the following benchmarks (which still need to be moved):
 
 - SpecBench
 - TODO: Winderix suite
-- TODO: embench
+- Embench
 
 ### Security evaluation
 
