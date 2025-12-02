@@ -131,6 +131,14 @@ jobs:
             cd /ecosystem/synthesis
             ./run-yosys.sh
 
+      - name: Run one riscv-formal test
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ecosystem:latest
+          run: |
+            cd /ecosystem/formal-verification/riscv-formal
+            make formal-insn_bgeu
+
   push-image:
     name: Push Docker image
     runs-on: ubuntu-latest
