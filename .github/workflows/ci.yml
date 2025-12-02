@@ -1,5 +1,5 @@
-name: Docker build test
-on: [push, pull_request]
+name: Full CI tests and Docker deployment
+on: [pull_request]
 
 jobs:
   build-docker:
