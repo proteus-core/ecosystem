@@ -3,6 +3,14 @@
 set -ex
 
 git clone https://github.com/YosysHQ/riscv-formal.git
+
+git clone --recurse-submodules --depth 1 https://github.com/YosysHQ/yosys.git
+cd yosys
+make -j$(nproc)
+make install
+
+cd ..
+
 git clone https://github.com/YosysHQ/sby
 cd sby
 make install

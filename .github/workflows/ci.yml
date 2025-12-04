@@ -93,9 +93,9 @@ jobs:
           run: |
             cd /ecosystem/benchmarks/spectreguard
             make && mv specBench.bin specBench-32.bin
-            make clean && make 64BIT=1 && mv specBench.bin specBench-64.bin
             ../../simulation/build/sim-32-i specBench-32.bin
             ../../simulation/build/sim-32-o specBench-32.bin
+            make clean && make 64BIT=1 && mv specBench.bin specBench-64.bin
             ../../simulation/build/sim-64-i specBench-64.bin
             ../../simulation/build/sim-64-o specBench-64.bin
 
