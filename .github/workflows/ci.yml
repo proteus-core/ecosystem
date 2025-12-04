@@ -117,7 +117,6 @@ jobs:
         with:
           image: ecosystem:latest
           run: |
-            cd /ecosystem
             . /ecosystem/waveform-analysis/.venv/bin/activate
             cd /ecosystem/noninterference-testing/
             make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
@@ -128,8 +127,9 @@ jobs:
         with:
           image: ecosystem:latest
           run: |
+            . /ecosystem/waveform-analysis/.venv/bin/activate
             cd /ecosystem/synthesis
-            ./run-yosys.sh
+            ./eval-hd.py ../core/Core.v --cell-library ../eval-hd/freepdk-45nm/stdcells.lib
 
       - name: Run one riscv-formal test
         uses: addnab/docker-run-action@v3
