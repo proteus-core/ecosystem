@@ -4,10 +4,10 @@ CORE ?= riscv.CoreFormal
 
 all: formal
 
-Core.v: proteus.v
+proteus.v:
 	cd $(BASE_DIR)/core && sbt "runMain $(CORE)" && cp Core.v $(BASE_DIR)/formal-verification/riscv-formal/proteus.v
 
-setup: Core.v
+setup: proteus.v
 	mkdir -p $(TARGET_DIR)
 	cp checks.cfg wrapper.sv proteus.v $(TARGET_DIR)
 	cd $(TARGET_DIR) && python3 ../../checks/genchecks.py
