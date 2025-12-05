@@ -3,12 +3,14 @@ FROM ubuntu:24.04
 # Set to noninteractive mode
 ARG DEBIAN_FRONTEND=noninteractive
 
-ARG INSTALL_TOOLCHAIN
-ARG INSTALL_EVAL_HD
-ARG INSTALL_PROTEUS
+ARG INSTALL_TOOLCHAIN=false
+ARG INSTALL_EVAL_HD=false
+ARG INSTALL_PROTEUS=false
+ARG INSTALL_RISCV_FORMAL=true
 RUN echo "Install RISC-V toolchain: ${INSTALL_TOOLCHAIN}"
 RUN echo "Install EVAL-HD: ${INSTALL_EVAL_HD}"
 RUN echo "Setup Proteus core: ${INSTALL_PROTEUS}"
+RUN echo "Install riscv-formal: ${INSTALL_RISCV_FORMAL}"
 
 ################################################################################
 # Basic dependencies
@@ -35,6 +37,7 @@ WORKDIR /ecosystem
 RUN if [ "${INSTALL_TOOLCHAIN}" = "true" ] ; then ./install-scripts/toolchain.sh ; else echo Skipping RISC-V toolchain... ; fi
 RUN if [ "${INSTALL_EVAL_HD}" = "true" ] ; then ./install-scripts/eval-hd.sh ; else echo Skipping EVAL-HD setup... ; fi
 RUN if [ "${INSTALL_PROTEUS}" = "true" ] ; then ./install-scripts/proteus.sh ; else echo Skipping Proteus core setup... ; fi
+RUN if [ "${INSTALL_RISCV_FORMAL}" = "true" ] ; then ./install-scripts/riscv-formal.sh ; else echo Skipping riscv-formal setup... ; fi
 
 # add RISC-V toolchain to path if it was installed (https://stackoverflow.com/a/51264575)
 ENV TOOLCHAIN_PATH=${INSTALL_TOOLCHAIN:+/opt/riscv/bin:}

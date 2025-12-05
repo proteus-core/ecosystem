@@ -1,3 +1,17 @@
+# Waveform analysis
+
+## Binary tools
+
+After installation, the library exports the following binaries that can be used (after activating the virtual environment):
+
+- `strip-vcd`: reduce VCD files to the list of signals that we are interested in (to speed up later processing or to be able to store it)
+- `waveform-correctness`: check the equivalence of architectural signals between two waveforms
+- `waveform-security`: checks whether certain benchmarks, when compiled with and without different countermeasures exhibit the expected leakage
+
+For more details, consult the `--help` option on these binaries.
+
+## Internal detail notes
+
 Waveform analysis is a fundamental basis of a lot of the analysis we perform in the ecosystem.
 
 - cpu interfaces describe which signals should be interpreted

@@ -1,5 +1,5 @@
-name: Docker build test
-on: [push, pull_request]
+name: Full CI tests and Docker deployment
+on: [pull_request]
 
 jobs:
   build-docker:
@@ -93,9 +93,9 @@ jobs:
           run: |
             cd /ecosystem/benchmarks/spectreguard
             make && mv specBench.bin specBench-32.bin
-            make clean && make 64BIT=1 && mv specBench.bin specBench-64.bin
             ../../simulation/build/sim-32-i specBench-32.bin
             ../../simulation/build/sim-32-o specBench-32.bin
+            make clean && make 64BIT=1 && mv specBench.bin specBench-64.bin
             ../../simulation/build/sim-64-i specBench-64.bin
             ../../simulation/build/sim-64-o specBench-64.bin
 
@@ -117,19 +117,27 @@ jobs:
         with:
           image: ecosystem:latest
           run: |
-            cd /ecosystem
             . /ecosystem/waveform-analysis/.venv/bin/activate
             cd /ecosystem/noninterference-testing/
-            make -C programs vcd USECLANG=0 RISCV_PREFIX=riscv64-unknown-elf SIM_EXE=/ecosystem/simulation/build/sim-32-o
-            ./run-security-eval.py
+            make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
+            waveform-security
 
       - name: Run EVAL-HD
         uses: addnab/docker-run-action@v3
         with:
           image: ecosystem:latest
           run: |
+            . /ecosystem/waveform-analysis/.venv/bin/activate
             cd /ecosystem/synthesis
-            ./run-yosys.sh
+            ./eval-hd.py ../core/Core.v --cell-library ../eval-hd/freepdk-45nm/stdcells.lib
+
+      - name: Run one riscv-formal test
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ecosystem:latest
+          run: |
+            cd /ecosystem/formal-verification/riscv-formal
+            make formal-insn_bgeu
 
   push-image:
     name: Push Docker image

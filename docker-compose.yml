@@ -1,0 +1,20 @@
+services:
+  ecosystem:
+    build:
+      context: .
+      args:
+        INSTALL_EVAL_HD: "true"
+        INSTALL_TOOLCHAIN: "true"
+    container_name: ecosystem
+    restart: "no"
+    stdin_open: true
+    tty: true
+    working_dir: /ecosystem
+    volumes:
+      - ./core:/ecosystem/core
+      - ./synthesis:/ecosystem/synthesis
+      - ./noninterference-testing:/ecosystem/noninterference-testing
+      - ./waveform-analysis:/ecosystem/waveform-analysis
+      - ./install-scripts:/ecosystem/install-scripts
+      - ./formal-verification:/ecosystem/formal-verification
+    command: "/bin/bash"

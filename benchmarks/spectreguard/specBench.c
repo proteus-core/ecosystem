@@ -265,7 +265,7 @@ int main(int argc, char **argv)
     time_work = 0;
     time_encrypt = 0;
 
-    for (k = 0; k < 100; k++)
+    for (k = 0; k < 10; k++)
     {
         printf("%d\n", k);
         time1 = rdcycle();
