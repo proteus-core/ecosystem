@@ -86,6 +86,19 @@ jobs:
             cp simulation/build/sim-64-i simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 64BIT=1 -C functional-tests
             cp simulation/build/sim-64-o simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 64BIT=1 -C functional-tests
 
+      - name: Run SpectreGuard+sglib benchmarks
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ecosystem:latest
+          run: |
+            cd /ecosystem/benchmarks/spectreguard-sglib
+            make && mv specBench.bin specBench-32.bin
+            ../../simulation/build/sim-32-i specBench-32.bin
+            ../../simulation/build/sim-32-o specBench-32.bin
+            make clean && make 64BIT=1 && mv specBench.bin specBench-64.bin
+            ../../simulation/build/sim-64-i specBench-64.bin
+            ../../simulation/build/sim-64-o specBench-64.bin
+
       - name: Run SpectreGuard benchmarks
         uses: addnab/docker-run-action@v3
         with:

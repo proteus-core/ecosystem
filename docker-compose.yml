@@ -11,6 +11,7 @@ services:
     tty: true
     working_dir: /ecosystem
     volumes:
+      - ./benchmarks:/ecosystem/benchmarks
       - ./core:/ecosystem/core
       - ./synthesis:/ecosystem/synthesis
       - ./noninterference-testing:/ecosystem/noninterference-testing
