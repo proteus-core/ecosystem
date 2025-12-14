@@ -22,6 +22,9 @@ _start:
 setup:
 	# public_address = &public_value;
 
+	# set up ProSpeCT CSRs
+	prospect_protect_4b secret
+
 	lw zero, (zero)
 	fence
 

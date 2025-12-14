@@ -12,9 +12,9 @@ services:
     working_dir: /ecosystem
     volumes:
       - ./core:/ecosystem/core
-      - ./synthesis:/ecosystem/synthesis
-      - ./noninterference-testing:/ecosystem/noninterference-testing
-      - ./waveform-analysis:/ecosystem/waveform-analysis
-      - ./install-scripts:/ecosystem/install-scripts
       - ./formal-verification:/ecosystem/formal-verification
+      - ./install-scripts:/ecosystem/install-scripts
+      - ./noninterference-testing:/ecosystem/noninterference-testing
+      - ./synthesis:/ecosystem/synthesis
+      - ./waveform-analysis:/ecosystem/waveform-analysis
     command: "/bin/bash"

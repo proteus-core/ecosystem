@@ -10,8 +10,8 @@
 
 .globl _start
 .data
-        variable: .word 42
-        finish_address: .word 0
+	variable: .word 42
+	finish_address: .word 0
 	secret: .word SECRET_VALUE
 
 .include "lib.s"
@@ -19,27 +19,30 @@
 .text
 _start:
 
-        # address_to_bound = &boundary;
+	# address_to_bound = &boundary;
 
-        la t0, finish
-        la t1, finish_address
-        sw t0, (t1)
+	# set up ProSpeCT CSRs
+	prospect_protect_4b secret
 
-        la t0, secret
-        lw t2, (t0)
+	la t0, finish
+	la t1, finish_address
+	sw t0, (t1)
 
-        cflush t1 t0 # address flushed from the cache here
+	la t0, secret
+	lw t2, (t0)
 
-        la t4, variable
-        sw t2, (t4)             # storing secret to variable
-        lw t0, finish_address
-        lw t6, (t0)             # slow load waiting for t0, t2 should be speculatively forwarded
-        j finish                # jump over load that would otherwise cause an exception (invalid address)
-        insert_dfence           # fence
-        # leak(t6);
-        insert_leak t6 t1 finish2
+	cflush t1 t0 # address flushed from the cache here
+
+	la t4, variable
+	sw t2, (t4)	     # storing secret to variable
+	lw t0, finish_address
+	lw t6, (t0)	     # slow load waiting for t0, t2 should be speculatively forwarded
+	j finish		# jump over load that would otherwise cause an exception (invalid address)
+	insert_dfence	   # fence
+	# leak(t6);
+	insert_leak t6 t1 finish2
 
 finish:
-        nop
+	nop
 finish2:
-        terminate_proteus
+	terminate_proteus

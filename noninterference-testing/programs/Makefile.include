@@ -36,7 +36,7 @@ OBJCOPY = $(RISCV_PREFIX)-objcopy
 GCC = $(RISCV_PREFIX)-gcc
 
 ARCHFLAGS =
-ARCHFLAGS += -march=rv32im
+ARCHFLAGS += -march=rv32im_zicsr
 ARCHFLAGS += -mabi=ilp32
 
 GCCFLAGS =
