@@ -122,14 +122,13 @@ jobs:
             make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
             waveform-security
 
-      - name: Run EVAL-HD
+      - name: Run EVAL-HD example
         uses: addnab/docker-run-action@v3
         with:
           image: ecosystem:latest
           run: |
-            . /ecosystem/waveform-analysis/.venv/bin/activate
             cd /ecosystem/synthesis
-            ./eval-hd.py ../core/Core.v --cell-library ../eval-hd/freepdk-45nm/stdcells.lib
+            ./eval-hd.sh
 
       - name: Run one riscv-formal test
         uses: addnab/docker-run-action@v3
