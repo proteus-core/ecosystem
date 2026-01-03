@@ -6,7 +6,7 @@ import os
 class InterfaceParser():
     def __init__(self, path: str):
         dirname = os.path.dirname(__file__)
-        with open(os.path.join(dirname, "/ecosystem/cpu-interfaces/" + path), 'r') as f:
+        with open(os.path.join(dirname, "../../../cpu-interfaces/" + path), 'r') as f:
             self.description = json.load(f)
 
     def get_performance_counters(self):
