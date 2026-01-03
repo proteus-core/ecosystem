@@ -106,10 +106,7 @@ class CPUWaveform:
                     return False
                 else:
                     mismatch = True
-        if early_out:
-            return True
-        else:
-            return mismatch
+        return not mismatch
 
     def liberal_security_filter(self) -> list[str]:
         all_signals = [var.full_name(self.waveform.hierarchy)
