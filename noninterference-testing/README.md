@@ -10,7 +10,7 @@ For noninterference testing, we use the `waveform-security` binary, while for co
 
 ```shell
 $ make -C programs all
-$ make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim
+$ make -C programs vcd SIM_EXE="$(pwd)/../simulation/build/sim"
 
 $ waveform-correctness --p1 programs/vcd/pht-test1_FULLFENCE_LEAKBR_EXP1.vcd --p2 programs/vcd/pht-test1_NOFENCE_LEAKBR_EXP0.vcd --diff # correctness checking script
 ----------------------------------------

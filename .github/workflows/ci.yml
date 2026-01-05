@@ -1,5 +1,9 @@
 name: Full CI tests and Docker deployment
-on: [pull_request]
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
 
 jobs:
   build-docker:
@@ -122,14 +126,13 @@ jobs:
             make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
             waveform-security
 
-      - name: Run EVAL-HD
+      - name: Run EVAL-HD example
         uses: addnab/docker-run-action@v3
         with:
           image: ecosystem:latest
           run: |
-            . /ecosystem/waveform-analysis/.venv/bin/activate
             cd /ecosystem/synthesis
-            ./eval-hd.py ../core/Core.v --cell-library ../eval-hd/freepdk-45nm/stdcells.lib
+            ./eval-hd.sh
 
       - name: Run one riscv-formal test
         uses: addnab/docker-run-action@v3
@@ -142,8 +145,9 @@ jobs:
   push-image:
     name: Push Docker image
     runs-on: ubuntu-latest
-    # only run when build and ci-tests both succeed
-    needs: [build-docker, ci-tests ]
+    # only run on the main branch when build and ci-tests both succeed
+    needs: [build-docker, ci-tests]
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
