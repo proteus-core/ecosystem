@@ -1,5 +1,9 @@
 name: Full CI tests and Docker deployment
-on: [pull_request]
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
 
 jobs:
   build-docker:
@@ -141,8 +145,9 @@ jobs:
   push-image:
     name: Push Docker image
     runs-on: ubuntu-latest
-    # only run when build and ci-tests both succeed
-    needs: [build-docker, ci-tests ]
+    # only run on the main branch when build and ci-tests both succeed
+    needs: [build-docker, ci-tests]
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
