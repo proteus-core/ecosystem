@@ -16,7 +16,7 @@ RUN echo "Install riscv-formal: ${INSTALL_RISCV_FORMAL}"
 # Basic dependencies
 ################################################################################
 
-RUN apt-get update && apt-get -yqq install build-essential git openjdk-17-jdk verilator libz-dev gcc-riscv64-unknown-elf python3-pip python3-venv gtkwave scons
+RUN apt-get update && apt-get -yqq install build-essential git openjdk-17-jdk verilator libz-dev python3-pip python3-venv gtkwave scons
 
 WORKDIR /ecosystem
 COPY ./benchmarks ./benchmarks
@@ -34,7 +34,7 @@ RUN ./install-scripts/sbt.sh
 RUN ./install-scripts/python-modules.sh
 
 WORKDIR /ecosystem
-RUN if [ "${INSTALL_TOOLCHAIN}" = "true" ] ; then ./install-scripts/toolchain.sh ; else echo Skipping RISC-V toolchain... ; fi
+RUN ./install-scripts/toolchain.sh
 RUN if [ "${INSTALL_EVAL_HD}" = "true" ] ; then ./install-scripts/eval-hd.sh ; else echo Skipping EVAL-HD setup... ; fi
 RUN if [ "${INSTALL_PROTEUS}" = "true" ] ; then ./install-scripts/proteus.sh ; else echo Skipping Proteus core setup... ; fi
 RUN if [ "${INSTALL_RISCV_FORMAL}" = "true" ] ; then ./install-scripts/riscv-formal.sh ; else echo Skipping riscv-formal setup... ; fi
