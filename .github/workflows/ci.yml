@@ -36,6 +36,7 @@ jobs:
             INSTALL_EVAL_HD=true
             INSTALL_PROTEUS=true
             INSTALL_TOOLCHAIN=true
+            INSTALL_RISCV_FORMAL=true
           outputs: type=docker,dest=/tmp/ecosystem-docker.tar
 
       - name: Upload Docker artifact
