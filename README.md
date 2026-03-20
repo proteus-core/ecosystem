@@ -21,29 +21,28 @@ A prebuilt Docker image can be pulled [from GitHub](https://github.com/proteus-c
 docker pull ghcr.io/proteus-core/ecosystem:latest
 ```
 
-### Local container setup
-
-Alternatively, you can build this image locally with the included [Dockerfile](./Dockerfile). This installs the bare minimum setup for running simulations, with additional flags for installing other components.
-The container can be built with the following command:
+You can launch this image using the following command:
 
 ```shell-session
-$ docker compose up
+docker compose run --remove-orphans ecosystem-prebuilt
+```
+
+### Building the container image
+
+Alternatively, you can build this image locally with the included [Dockerfile](./Dockerfile).
+This installs the bare minimum setup for running simulations, with additional flags for installing other components.
+The container can be run (and built on the first run) with the following command:
+
+```shell-session
+docker compose run --remove-orphans ecosystem
 ```
 
 Additional build arguments can be added in `docker-compose.yml`, for example `INSTALL_TOOLCHAIN` to install the RISC-V GNU toolchain, `INSTALL_EVAL_HD` to install the hardware cost evaluation tool and `INSTALL_PROTEUS` to clone and install the Proteus core inside the container (instead of mounting it as a volume).
 Note that installing these extra tools will add a substantial amount of time to the build process.
 
-### Working with the container
-
-You can launch a container after building:
-
-```shell-session
-$ docker compose run --remove-orphans ecosystem
-```
-
 ### Non-container setup
 
-If you want to install the components natively without using Docker, you can follow the steps in the [Dockerfile](./Dockerfile) and the [installation scripts](./install-scripts/)
+If you want to install the components natively without using Docker, you can follow the steps in the [Dockerfile](./Dockerfile) and the [installation scripts](./install-scripts/).
 
 ## Developing with Proteus
 
