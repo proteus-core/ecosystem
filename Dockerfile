@@ -45,4 +45,4 @@ ENV TOOLCHAIN_PATH=${TOOLCHAIN_PATH:-}
 
 ENV PATH=${TOOLCHAIN_PATH}${PATH}
 
-CMD /bin/bash
+CMD ["/bin/bash"]
