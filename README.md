@@ -21,7 +21,14 @@ A prebuilt Docker image can be pulled [from GitHub](https://github.com/proteus-c
 docker pull ghcr.io/proteus-core/ecosystem:latest
 ```
 
-You can launch this image using the following command:
+By default, the image mounts the `core` directory as a volume, which it expects to contain the source files of the Proteus core.
+As such, you should clone Proteus into `core` with:
+
+```shell-session
+git clone --recurse-submodules --branch main https://github.com/proteus-core/proteus.git core
+```
+
+You can then launch this image using the following command:
 
 ```shell-session
 docker compose run --remove-orphans ecosystem-prebuilt
