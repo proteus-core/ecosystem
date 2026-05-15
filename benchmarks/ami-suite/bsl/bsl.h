@@ -1,0 +1,13 @@
+#ifndef BSL_H
+#define BSL_H
+
+#define INTERRUPT_VECTOR_START 0xFFE0
+#define INTERRUPT_VECTOR_END   0xFFF0
+#define BSL_PASSWORD_LENGTH    (INTERRUPT_VECTOR_END-INTERRUPT_VECTOR_START+1)
+
+#define SUCCESSFUL_OPERATION 0x00
+#define BSL_PASSWORD_ERROR   0x05
+
+char BSL430_unlock_BSL(/* secret */ char * data);
+
+#endif
