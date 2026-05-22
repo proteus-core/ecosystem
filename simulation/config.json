@@ -1,0 +1,31 @@
+{
+    "pipeline": "Dynamic",
+    "isa": "RV32I",
+    "memBusWidth": 128,
+    "extraDbusReadDelay": 32,
+    "applyDelayToIBus": false,
+    "iCache": {
+        "sets": 2,
+        "ways": 2,
+        "prefetcher": {
+            "prefetcherType": "SequentialInstructionPrefetcher"
+        },
+        "maxPrefetches": 1
+    },
+    "dCache": {
+        "sets": 8,
+        "ways": 2,
+        "prefetcher": {
+            "prefetcherType": "None"
+        },
+        "maxPrefetches": 1
+    },
+    "robEntries": 32,
+    "parallelAlus": 8,
+    "parallelMulDivs": 2,
+    "parallelLoads": 3,
+    "addressBasedPsf": true,
+    "addressBasedSsb": true,
+    "stlSpec": true,
+    "debug": true
+}

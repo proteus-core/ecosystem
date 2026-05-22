@@ -1,4 +1,9 @@
-CORE ?= riscv.CoreExtMem32
+CORE ?= riscv.CoreExtMem
+
+# Only applicable for CORE=riscv.CoreExtMem:
+PIPELINE ?= Static
+ISA ?= RV32I
+# To instead build with a custom config file, define CONFIG=<path>
 
 BASE_DIR ?= ../core
 BUILD_DIR = build
@@ -6,7 +11,7 @@ TOPLEVEL_MODULE = Core
 VERILOG_FILE_NAME = $(TOPLEVEL_MODULE).v
 VERILOG_INPUT = $(BUILD_DIR)/$(VERILOG_FILE_NAME)
 VERILATOR_NAME = V$(TOPLEVEL_MODULE)
-EXE_NAME = sim
+EXE_NAME ?= sim
 EXE_FILE = $(BUILD_DIR)/$(EXE_NAME)
 
 CFLAGS = -O3 -std=c++20
@@ -25,7 +30,15 @@ $(VERILOG_INPUT): $(BASE_DIR)/$(VERILOG_FILE_NAME)
 	cp $< $@
 
 $(BASE_DIR)/$(VERILOG_FILE_NAME): FORCE
+ifeq ($(CORE),riscv.CoreExtMem)
+ifdef CONFIG
+	cd $(BASE_DIR); sbt "runMain $(CORE) $(abspath $(CONFIG))"
+else
+	cd $(BASE_DIR); sbt "runMain $(CORE) $(PIPELINE) $(ISA)"
+endif
+else
 	cd $(BASE_DIR); sbt "runMain $(CORE)"
+endif
 
 FORCE:
 
