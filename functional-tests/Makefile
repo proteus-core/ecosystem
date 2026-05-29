@@ -1,4 +1,6 @@
-CORE ?= riscv.CoreExtMem32
+CORE ?= riscv.CoreExtMem
+PIPELINE ?= Static
+ISA ?= RV32I
 BUILD_CORE ?= 1
 64BIT ?= 0
 RISCV_PREFIX ?= riscv64-unknown-elf
@@ -55,7 +57,7 @@ $(BUILD_DIR)/%.o: %.S
 	$(OBJCOPY) -O binary $^ $@
 
 $(SIM_EXE): $(FORCE)
-	make -C $(SIM_DIR) CORE=$(CORE)
+	make -C $(SIM_DIR) CORE=$(CORE) PIPELINE=$(PIPELINE) ISA=$(ISA)
 
 .PHONY: FORCE
 

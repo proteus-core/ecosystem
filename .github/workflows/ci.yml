@@ -126,9 +126,6 @@ jobs:
             make SRC_DIR=../ami-suite
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../ami-suite --sim=../../simulation/build/sim-32-i
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../ami-suite --sim=../../simulation/build/sim-32-o
-            make clean && make 64BIT=1 SRC_DIR=../ami-suite
-            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../ami-suite --sim=../../simulation/build/sim-64-i
-            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../ami-suite --sim=../../simulation/build/sim-64-o
 
       - name: Run non-interference test
         uses: addnab/docker-run-action@v3

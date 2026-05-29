@@ -66,9 +66,19 @@ Our [board support package](./newlib-bsp/) with standard library functions and a
 
 ### Simulation
 
-We use a Verilator-based [simulation flow](./simulation/) that can be build with `make -C simulation` from the root directory of the container.
+We use a Verilator-based [simulation flow](./simulation/) that can be build with `make -C simulation` from the root directory of the container. The following arguments are supported:
 
-- `CORE=...`: specify which configuration to build.
+- `CORE=...`: specify which configuration to build, e.g., `riscv.CoreExtMem` (default), `riscv.CoreFormal`, etc.
+- `BASE_DIR=...`: specify the path to the directory with the Proteus core (default: `../core`)
+- `EXE_NAME=...`: specify the name of the output simulation file (default: `sim`)
+
+When `CORE=riscv.CoreExtMem`, you can additionally specify either the pipeline and ISA configuration with `PIPELINE` and `ISA`, or provide a fully custom configuration with `CONFIG`: (if a `CONFIG` is provided, `PIPELINE` and `ISA` are ignored)
+- `PIPELINE=...`: specify the pipeline type, either `Static` (default) or `Dynamic`
+- `ISA=...`: specify the ISA, either `RV32I` (default), `RV32E` or `RV64I`
+- `CONFIG=...`: specify the path to a JSON config file, which must contain a "pipeline" field, either "Static" or "Dynamic", followed by the properties that differ from the default Proteus core configuration of `Config.scala`
+  * A minimal example: { "pipeline": "Dynamic", "dCaches": [ { "sets": 16, "ways": 4 } ] }
+  * A complete example with a two-level data cache is provided in [config.json](./simulation/config.json)
+  * Note: if the "iCaches" or "dCaches" field is not specified, the core takes the default configuration of the corresponding cache; if the field is specified but contains no items, the core will not include the corresponding cache; if the field contains multiple items, the caches will be connected in the given order
 
 Once the simulation binary is built, the options can be consulted by calling `--help` on it.
 
