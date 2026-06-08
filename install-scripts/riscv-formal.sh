@@ -6,7 +6,7 @@ git clone https://github.com/YosysHQ/riscv-formal.git
 
 git clone --recurse-submodules --depth 1 https://github.com/YosysHQ/yosys.git
 pushd yosys
-apt-get install -yqq build-essential clang lld bison flex libreadline-dev gawk tcl-dev libffi-dev git graphviz xdot pkg-config python3 libboost-system-dev libboost-python-dev libboost-filesystem-dev zlib1g-dev
+apt-get install -yqq build-essential clang lld bison flex libreadline-dev gawk tcl-dev libffi-dev git graphviz xdot pkg-config python3 libboost-system-dev libboost-python-dev libboost-filesystem-dev zlib1g-dev cmake
 cmake -B build . -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release --parallel $(nproc)
 cmake --install build --strip
