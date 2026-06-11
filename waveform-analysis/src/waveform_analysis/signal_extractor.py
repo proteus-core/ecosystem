@@ -11,8 +11,8 @@ class CPUWaveform:
     def __init__(self, vcdname: str, interface: InterfaceParser):
         self.interface = interface
         self.waveform = pywellen.Waveform(vcdname)
-        clock_changes = list([t for (t, v) in self.waveform.get_signal_from_path(
-            interface.get_clk()).all_changes() if v == 1])
+        clock_changes = list([t for (t, v) in self.waveform[
+            interface.get_clk()].signal if v == 1])
         self.clock_period = clock_changes[1] - clock_changes[0]
         self.max_clock = clock_changes[-1]
         self.clock_count = self.max_clock // self.clock_period
@@ -23,11 +23,11 @@ class CPUWaveform:
         Returns a list of lists of tuples (signal_name, value), where each inner list corresponds to a clock cycle.
         """
         seq: list[list[tuple[str, int]]] = []
-        wellen_signals = [self.waveform.get_signal_from_path(
-            signal) for signal in signals]
+        wellen_signals = [self.waveform[
+            signal].signal for signal in signals]
 
         for t in range(0, self.max_clock + self.clock_period, self.clock_period):
-            seq.append([(signals[idx], signal.value_at_time(t))
+            seq.append([(signals[idx], signal.value_at(t))
                        for (idx, signal) in enumerate(wellen_signals)])
 
         return seq
@@ -38,8 +38,7 @@ class CPUWaveform:
         Returns a list of lists of tuples (signal_name, value), where each inner list corresponds to a new state.
         """
         seq: list[list[tuple[str, int]]] = []
-        wellen_signals = [self.waveform.get_signal_from_path(
-            signal) for signal in signals]
+        wellen_signals = [self.waveform[signal].signal for signal in signals]
 
         current_pct = 0
 
@@ -48,11 +47,11 @@ class CPUWaveform:
             # if new_pct > current_pct:
             #     print(f"Progress: {new_pct}%")
             #     current_pct = new_pct
-            new_state = [(signals[idx], signal.value_at_time(t))
+            new_state = [(signals[idx], signal.value_at(t))
                          for (idx, signal) in enumerate(wellen_signals)]
             # TODO: refactor this out to use a lambda from the interface
-            active = self.waveform.get_signal_from_path(
-                self.interface.get_instruction_stream()["active"]).value_at_time(t)
+            active = self.waveform[
+                self.interface.get_instruction_stream()["active"]].signal.value_at(t)
             if active == 0:
                 continue  # skip changes where no instruction retires
             if len(seq) == 0 or new_state != seq[-1]:
@@ -61,12 +60,12 @@ class CPUWaveform:
         return seq
 
     def get_last_value(self, signal: str) -> int:
-        return self.waveform.get_signal_from_path(signal).value_at_time(self.max_clock)
+        return self.waveform[signal].signal.value_at(self.max_clock)
 
     def get_high_rate(self, signal: str) -> float:
         count = 0
         previous_t = 0
-        for (t, v) in self.waveform.get_signal_from_path(signal).all_changes():
+        for (t, v) in self.waveform[signal].signal:
             if v == 0 and previous_t != 0:
                 count += (t - previous_t) // self.clock_period
             previous_t = t
@@ -109,8 +108,7 @@ class CPUWaveform:
         return not mismatch
 
     def liberal_security_filter(self) -> list[str]:
-        all_signals = [var.full_name(self.waveform.hierarchy)
-                       for var in self.waveform.hierarchy.all_vars()]
+        all_signals = [var.full_name for var in self.waveform.all_vars()]
 
         # Only keep signals related to the pipeline
         all_signals = [s for s in all_signals if "TOP.Core.pipeline" in s]
@@ -142,8 +140,7 @@ class CPUWaveform:
         return [s for s in all_signals if any(re.match(pattern, s) for pattern in signals_patterns)]
 
     def conservative_security_filter(self) -> list[str]:
-        all_signals = [var.full_name(self.waveform.hierarchy)
-                       for var in self.waveform.hierarchy.all_vars()]
+        all_signals = [var.full_name for var in self.waveform.all_vars()]
 
         # Only keep signals related to the pipeline
         all_signals = [s for s in all_signals if "TOP.Core.pipeline" in s]
