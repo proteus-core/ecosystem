@@ -43,8 +43,12 @@ start_tests:
 #define RVTEST_CODE_END                                                 \
     .weak mtvec_handler;
 
+// The alignment matches the upstream env/p definition; without it, the test
+// data of the 64-bit load/store tests is not naturally aligned, and every
+// access to it traps as misaligned.
 #define RVTEST_DATA_BEGIN                                               \
-    .data;
+    .data;                                                              \
+    .align 4;
 
 #define RVTEST_DATA_END
 

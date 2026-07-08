@@ -16,7 +16,7 @@ SIM_EXE = $(SIM_DIR)/build/sim
 CC = $(RISCV_PREFIX)-gcc
 LD = $(RISCV_PREFIX)-gcc
 OBJCOPY = $(RISCV_PREFIX)-objcopy
-ARCHFLAGS ?= -march=rv32im_zicsr_zicond -mabi=ilp32
+ARCHFLAGS ?= -march=rv32im_zicsr_zifencei_zicond -mabi=ilp32
 
 ifeq ($(BUILD_CORE),1)
 FORCE = FORCE
@@ -30,11 +30,11 @@ TEST_DIRS ?= $(ISA_TESTS_DIR)/rv32ui $(ISA_TESTS_DIR)/rv32mi $(ISA_TESTS_DIR)/rv
 
 ifeq ($(64BIT),1)
 TEST_DIRS = $(ISA_TESTS_DIR)/rv64ui $(ISA_TESTS_DIR)/rv64mi $(ISA_TESTS_DIR)/rv64um $(TESTS_DIR)/zicond-test $(CUSTOM_TESTS_DIR)
-ARCHFLAGS = -march=rv64im_zicsr_zicond -mabi=lp64
+ARCHFLAGS = -march=rv64im_zicsr_zifencei_zicond -mabi=lp64
 endif
 
 ALL_ISA_TESTS = $(shell find $(TEST_DIRS) -name '*.S')
-UNSUPPORTED_TESTS = %fence_i.S %breakpoint.S %ma_data.S %pmpaddr.S %instret_overflow.S %ld_st.S %sd.S %st_ld.S %ld.S
+UNSUPPORTED_TESTS = %breakpoint.S %ma_data.S %pmpaddr.S %instret_overflow.S
 ALL_TESTS = $(filter-out $(UNSUPPORTED_TESTS),$(ALL_ISA_TESTS))
 ALL_TARGETS = $(addsuffix .pass,$(basename $(addprefix $(BUILD_DIR)/,$(notdir $(ALL_TESTS)))))
 
