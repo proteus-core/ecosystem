@@ -1,0 +1,21 @@
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get -yqq install \
+    autoconf automake autotools-dev bc bison build-essential curl flex \
+    gawk gperf git libexpat-dev libgmp-dev libmpc-dev libmpfr-dev libtool \
+    ninja-build patchutils python3 texinfo zlib1g-dev
+
+RUN mkdir -p /toolchain && cd /toolchain \
+    && git clone --depth 1 --shallow-submodules https://github.com/riscv/riscv-gnu-toolchain . \
+    && ./configure --prefix=/opt/riscv --with-cmodel=medany \
+        --with-multilib-generator="rv32im_zicsr_zicond-ilp32--;rv64im_zicsr_zicond-lp64--" \
+        --enable-debug-info \
+    && make -j$(nproc) \
+    && make clean \
+    && rm -rf /toolchain
+
+ENV PATH=/opt/riscv/bin:$PATH
+
+CMD ["/bin/bash"]

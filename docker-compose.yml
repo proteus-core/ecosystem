@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args: # add more flags here to install EVAL-HD, riscv-formal, ...
-        INSTALL_TOOLCHAIN: "true"
+        INSTALL_PROTEUS: "true"
     container_name: ecosystem
     restart: "no"
     stdin_open: true

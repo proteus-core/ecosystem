@@ -1,22 +1,15 @@
-FROM ubuntu:24.04
+FROM ghcr.io/proteus-core/riscv-toolchain:latest
 
-# Set to noninteractive mode
 ARG DEBIAN_FRONTEND=noninteractive
 
-ARG INSTALL_TOOLCHAIN=false
 ARG INSTALL_EVAL_HD=false
 ARG INSTALL_PROTEUS=false
 ARG INSTALL_RISCV_FORMAL=false
-RUN echo "Install RISC-V toolchain: ${INSTALL_TOOLCHAIN}"
 RUN echo "Install EVAL-HD: ${INSTALL_EVAL_HD}"
 RUN echo "Setup Proteus core: ${INSTALL_PROTEUS}"
 RUN echo "Install riscv-formal: ${INSTALL_RISCV_FORMAL}"
 
-################################################################################
-# Basic dependencies
-################################################################################
-
-RUN apt-get update && apt-get -yqq install build-essential git openjdk-17-jdk verilator libz-dev python3-pip python3-venv gtkwave scons
+RUN apt-get update && apt-get -yqq install openjdk-17-jdk verilator libz-dev python3-pip python3-venv gtkwave scons
 
 WORKDIR /ecosystem
 COPY ./benchmarks ./benchmarks
@@ -33,16 +26,8 @@ COPY ./waveform-analysis ./waveform-analysis
 RUN ./install-scripts/sbt.sh
 RUN ./install-scripts/python-modules.sh
 
-WORKDIR /ecosystem
-RUN if [ "${INSTALL_TOOLCHAIN}" = "true" ] ; then ./install-scripts/toolchain.sh ; else echo Skipping RISC-V toolchain, installing apt package...; apt-get -yqq install gcc-riscv64-unknown-elf ; fi
 RUN if [ "${INSTALL_EVAL_HD}" = "true" ] ; then ./install-scripts/eval-hd.sh ; else echo Skipping EVAL-HD setup... ; fi
 RUN if [ "${INSTALL_PROTEUS}" = "true" ] ; then ./install-scripts/proteus.sh ; else echo Skipping Proteus core setup... ; fi
 RUN if [ "${INSTALL_RISCV_FORMAL}" = "true" ] ; then ./install-scripts/riscv-formal.sh ; else echo Skipping riscv-formal setup... ; fi
-
-# add RISC-V toolchain to path if it was installed (https://stackoverflow.com/a/51264575)
-ENV TOOLCHAIN_PATH=${INSTALL_TOOLCHAIN:+/opt/riscv/bin:}
-ENV TOOLCHAIN_PATH=${TOOLCHAIN_PATH:-}
-
-ENV PATH=${TOOLCHAIN_PATH}${PATH}
 
 CMD ["/bin/bash"]
