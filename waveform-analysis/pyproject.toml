@@ -3,7 +3,7 @@ name = "waveform_analysis"
 version = "0.0.1"
 description = "Waveform analyzer tools for the Proteus ecosystem"
 dependencies = [
-  "pywellen",
+  "pywellen < 0.25.0",
 ]
 
 [build-system]
