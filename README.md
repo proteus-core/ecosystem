@@ -44,7 +44,18 @@ The container can be run (and built on the first run) with the following command
 docker compose run --remove-orphans ecosystem
 ```
 
-Additional build arguments can be added in `docker-compose.yml`, for example `INSTALL_TOOLCHAIN` to install the RISC-V GNU toolchain, `INSTALL_EVAL_HD` to install the hardware cost evaluation tool and `INSTALL_PROTEUS` to clone and install the Proteus core inside the container (instead of mounting it as a volume).
+This build starts `FROM` a prebuilt RISC-V GNU toolchain base image published alongside this repository.
+If you do not have access to that image, you can instead build the toolchain from source as part of the build using the `local` profile:
+
+```shell-session
+docker compose --profile local run --remove-orphans ecosystem-local
+```
+
+This first compiles the toolchain (defined in [Dockerfile.riscv-toolchain](./Dockerfile.riscv-toolchain), which reuses the [toolchain install script](./install-scripts/toolchain.sh)) and then builds the ecosystem on top of it, without requiring any registry access.
+Compiling the toolchain adds a substantial amount of time to the first build.
+(Equivalently, with plain Docker: build `Dockerfile.riscv-toolchain`, then pass its tag via `docker build --build-arg TOOLCHAIN_IMAGE=... .`)
+
+Additional build arguments can be added in `docker-compose.yml`, for example `INSTALL_EVAL_HD` to install the hardware cost evaluation tool and `INSTALL_PROTEUS` to clone and install the Proteus core inside the container (instead of mounting it as a volume).
 Note that installing these extra tools will add a substantial amount of time to the build process.
 
 ### Non-container setup

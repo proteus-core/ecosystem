@@ -5,7 +5,9 @@ on:
 
 jobs:
   # ── Full build (PR events, push to main) ──────────────────────────
-  build-docker:
+  # Build the full image and share it as a workflow artifact, so the tests can
+  # run on it without ever publishing the temporary image to the registry.
+  build:
     name: Build Docker image (full)
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -23,27 +25,33 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Log in to the container registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
+      - name: Build image
         uses: docker/build-push-action@v7
         with:
           context: .
           file: "Dockerfile"
-          tags: ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}
-          push: true
+          tags: ecosystem:ci
+          load: true
           build-args: |
             INSTALL_EVAL_HD=true
             INSTALL_PROTEUS=true
             INSTALL_RISCV_FORMAL=true
 
+      - name: Export image
+        run: docker save ecosystem:ci | gzip > image.tar.gz
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecosystem-image
+          path: image.tar.gz
+          retention-days: 1
+          compression-level: 0 # already gzipped
+
   # ── Reduced build (push to non-main branches) ─────────────────────
-  build-docker-reduced:
+  # A lighter image (only the Proteus setup) shared the same way; only the
+  # reduced test subset runs on it and it is likewise never published.
+  build-reduced:
     name: Build Docker image (reduced)
     if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -61,45 +69,39 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Log in to the container registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
+      - name: Build image
         uses: docker/build-push-action@v7
         with:
           context: .
           file: "Dockerfile"
-          tags: ghcr.io/${{ github.repository_owner }}/ecosystem-reduced:${{ github.sha }}
-          push: true
+          tags: ecosystem:ci
+          load: true
           build-args: |
             INSTALL_PROTEUS=true
 
-  # ── Shared tests (run on either image) ────────────────────────────
+      - name: Export image
+        run: docker save ecosystem:ci | gzip > image.tar.gz
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecosystem-image
+          path: image.tar.gz
+          retention-days: 1
+          compression-level: 0 # already gzipped
+
+  # ── Reduced tests (run on every event, against whichever image was built) ──
+  # Both builds publish the same artifact name and image tag, so these jobs do
+  # not need to know which one ran.
 
   test-functional:
     runs-on: ubuntu-latest
-    needs: [build-docker, build-docker-reduced]
-    if: always() && (needs.build-docker.result == 'success' || needs.build-docker-reduced.result == 'success')
+    needs: [build, build-reduced]
+    if: always() && (needs.build.result == 'success' || needs.build-reduced.result == 'success')
     steps:
-      - name: Determine image tag
-        id: image
-        run: |
-          if [ "${{ needs.build-docker.result }}" = "success" ]; then
-            echo "tag=ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=ghcr.io/${{ github.repository_owner }}/ecosystem-reduced:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      - uses: addnab/docker-run-action@v3
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          image: ${{ steps.image.outputs.tag }}
           run: |
             cd /ecosystem
             cp simulation/build/sim-32-i simulation/build/sim && make clean -C functional-tests && make RISCV_PREFIX=riscv64-unknown-elf BUILD_CORE=0 -C functional-tests
@@ -109,42 +111,27 @@ jobs:
 
   test-noninterference:
     runs-on: ubuntu-latest
-    needs: [build-docker, build-docker-reduced]
-    if: always() && (needs.build-docker.result == 'success' || needs.build-docker-reduced.result == 'success')
+    needs: [build, build-reduced]
+    if: always() && (needs.build.result == 'success' || needs.build-reduced.result == 'success')
     steps:
-      - name: Determine image tag
-        id: image
-        run: |
-          if [ "${{ needs.build-docker.result }}" = "success" ]; then
-            echo "tag=ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=ghcr.io/${{ github.repository_owner }}/ecosystem-reduced:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      - uses: addnab/docker-run-action@v3
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          image: ${{ steps.image.outputs.tag }}
           run: |
             . /ecosystem/waveform-analysis/.venv/bin/activate
             cd /ecosystem/noninterference-testing/
             make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
             waveform-security
 
-  # ── Full-only tests (only when build-docker succeeds) ─────────────
+  # ── Full-only tests (PR + main, against the full image) ───────────
 
   test-newlib:
     runs-on: ubuntu-latest
-    needs: build-docker
+    needs: build
     steps:
-      - uses: addnab/docker-run-action@v3
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          image: ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}
           run: |
             cd /ecosystem/newlib-bsp
             make main.bin && mv main.bin main-32.bin
@@ -156,14 +143,11 @@ jobs:
 
   test-spectreguard:
     runs-on: ubuntu-latest
-    needs: build-docker
+    needs: build
     steps:
-      - uses: addnab/docker-run-action@v3
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          image: ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}
           run: |
             cd /ecosystem/benchmarks/spectreguard
             make && mv specBench.bin specBench-32.bin
@@ -175,14 +159,11 @@ jobs:
 
   test-embench:
     runs-on: ubuntu-latest
-    needs: build-docker
+    needs: build
     steps:
-      - uses: addnab/docker-run-action@v3
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          image: ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}
           run: |
             cd /ecosystem/benchmarks/embench
             make
@@ -194,14 +175,11 @@ jobs:
 
   test-ami-suite:
     runs-on: ubuntu-latest
-    needs: build-docker
+    needs: build
     steps:
-      - uses: addnab/docker-run-action@v3
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          image: ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}
           run: |
             cd /ecosystem/benchmarks/embench
             make SRC_DIR=../ami-suite
@@ -210,36 +188,29 @@ jobs:
 
   test-eval-hd:
     runs-on: ubuntu-latest
-    needs: build-docker
+    needs: build
     steps:
-      - uses: addnab/docker-run-action@v3
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          image: ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}
           run: |
             cd /ecosystem/synthesis
             ./eval-hd.sh
 
   test-riscv-formal:
     runs-on: ubuntu-latest
-    needs: build-docker
+    needs: build
     steps:
-      - uses: addnab/docker-run-action@v3
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          image: ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}
           run: |
             cd /ecosystem/formal-verification/riscv-formal
             make formal-insn_bgeu
 
-  # ── Tag as latest (main only, after all full tests pass) ──────────
-
+  # ── Publish as latest (main only, after all full tests pass) ──────
   push-image:
-    name: Tag Docker image as latest
+    name: Publish image as latest
     runs-on: ubuntu-latest
     needs:
       - test-newlib
@@ -252,6 +223,14 @@ jobs:
       - test-riscv-formal
     if: github.ref == 'refs/heads/main'
     steps:
+      - name: Download ecosystem image
+        uses: actions/download-artifact@v4
+        with:
+          name: ecosystem-image
+
+      - name: Load ecosystem image
+        run: docker load -i image.tar.gz
+
       - name: Log in to the container registry
         uses: docker/login-action@v4
         with:
@@ -259,8 +238,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Tag as latest
+      - name: Tag and push as latest
         run: |
-          docker buildx imagetools create \
-            -t ghcr.io/${{ github.repository_owner }}/ecosystem:latest \
-            ghcr.io/${{ github.repository_owner }}/ecosystem:${{ github.sha }}
+          docker tag ecosystem:ci ghcr.io/${{ github.repository_owner }}/ecosystem:latest
+          docker push ghcr.io/${{ github.repository_owner }}/ecosystem:latest
+
+  # ── Clean up the shared image artifact once everything is done ────
+  # Runs after all consumers (tests + publish) regardless of their outcome, so
+  # the multi-GB image does not linger in artifact storage after the run.
+  cleanup-artifact:
+    runs-on: ubuntu-latest
+    needs:
+      - test-newlib
+      - test-functional
+      - test-spectreguard
+      - test-embench
+      - test-ami-suite
+      - test-noninterference
+      - test-eval-hd
+      - test-riscv-formal
+      - push-image
+    if: always()
+    permissions:
+      actions: write
+    steps:
+      - name: Delete ecosystem image artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: ecosystem-image
+          failOnError: false

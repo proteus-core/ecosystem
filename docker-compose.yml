@@ -1,33 +1,55 @@
+# Shared runtime configuration for the interactive ecosystem containers.
+x-ecosystem-runtime: &ecosystem-runtime
+  restart: "no"
+  stdin_open: true
+  tty: true
+  working_dir: /ecosystem
+  volumes:
+    - ./core:/ecosystem/core
+    - ./synthesis:/ecosystem/synthesis
+    - ./noninterference-testing:/ecosystem/noninterference-testing
+    - ./waveform-analysis:/ecosystem/waveform-analysis
+    - ./install-scripts:/ecosystem/install-scripts
+    - ./formal-verification:/ecosystem/formal-verification
+  command: "/bin/bash"
+
 services:
+  # Default build: pulls the prebuilt RISC-V toolchain base image (needs access to it).
   ecosystem:
+    <<: *ecosystem-runtime
     build:
       context: .
       args: # add more flags here to install EVAL-HD, riscv-formal, ...
         INSTALL_PROTEUS: "true"
     container_name: ecosystem
-    restart: "no"
-    stdin_open: true
-    tty: true
-    working_dir: /ecosystem
-    volumes:
-      - ./core:/ecosystem/core
-      - ./synthesis:/ecosystem/synthesis
-      - ./noninterference-testing:/ecosystem/noninterference-testing
-      - ./waveform-analysis:/ecosystem/waveform-analysis
-      - ./install-scripts:/ecosystem/install-scripts
-      - ./formal-verification:/ecosystem/formal-verification
-    command: "/bin/bash"
+
+  # Builds the RISC-V toolchain base image from source. Gated behind the "local"
+  # profile so users with access to the published image don't have to compile it.
+  toolchain:
+    build:
+      context: .
+      dockerfile: Dockerfile.riscv-toolchain
+    image: proteus-core/riscv-toolchain:local
+    profiles: ["local"]
+
+  # Same as "ecosystem" but builds the toolchain locally instead of pulling the
+  # (possibly private) published image. No registry access required.
+  #   docker compose --profile local up --build ecosystem-local
+  ecosystem-local:
+    <<: *ecosystem-runtime
+    build:
+      context: .
+      args:
+        INSTALL_PROTEUS: "true"
+        TOOLCHAIN_IMAGE: riscv-toolchain-base
+      additional_contexts:
+        # Resolve the base image to the locally built "toolchain" service, so the
+        # FROM in the main Dockerfile never touches the registry.
+        - "riscv-toolchain-base=service:toolchain"
+    container_name: ecosystem-local
+    profiles: ["local"]
+
+  # Runs the fully prebuilt ecosystem image straight from the registry.
   ecosystem-prebuilt:
+    <<: *ecosystem-runtime
     image: ghcr.io/proteus-core/ecosystem
-    restart: "no"
-    stdin_open: true
-    tty: true
-    working_dir: /ecosystem
-    volumes:
-      - ./core:/ecosystem/core
-      - ./synthesis:/ecosystem/synthesis
-      - ./noninterference-testing:/ecosystem/noninterference-testing
-      - ./waveform-analysis:/ecosystem/waveform-analysis
-      - ./install-scripts:/ecosystem/install-scripts
-      - ./formal-verification:/ecosystem/formal-verification
-    command: "/bin/bash"

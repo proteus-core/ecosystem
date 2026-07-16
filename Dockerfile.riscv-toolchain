@@ -2,20 +2,15 @@ FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get -yqq install \
-    autoconf automake autotools-dev bc bison build-essential curl flex \
-    gawk gperf git libexpat-dev libgmp-dev libmpc-dev libmpfr-dev libtool \
-    ninja-build patchutils python3 texinfo zlib1g-dev
+# toolchain.sh only installs packages (it never refreshes the apt cache), so the
+# base image's empty package lists have to be populated first.
+RUN apt-get update
 
-RUN mkdir -p /toolchain && cd /toolchain \
-    && git clone --depth 1 --shallow-submodules https://github.com/riscv/riscv-gnu-toolchain . \
-    && ./configure --prefix=/opt/riscv --with-cmodel=medany \
-        --with-multilib-generator="rv32im_zicsr_zicond-ilp32--;rv64im_zicsr_zicond-lp64--" \
-        --enable-debug-info \
-    && make -j$(nproc) \
-    && make clean \
-    && rm -rf /toolchain
+# Build the toolchain via the shared install script so the commands live in a
+# single place. It installs into $PWD/gnu, hence the cd into /opt.
+COPY install-scripts/toolchain.sh /tmp/toolchain.sh
+RUN cd /opt && bash /tmp/toolchain.sh && rm /tmp/toolchain.sh
 
-ENV PATH=/opt/riscv/bin:$PATH
+ENV PATH=/opt/gnu/bin:$PATH
 
 CMD ["/bin/bash"]
