@@ -243,6 +243,11 @@ jobs:
       - test-riscv-formal
     if: github.ref == 'refs/heads/main'
     steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+
       - name: Download ecosystem image
         uses: actions/download-artifact@v4
         with:
