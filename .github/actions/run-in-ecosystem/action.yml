@@ -1,0 +1,34 @@
+name: Run in ecosystem image
+description: >
+  Load the ecosystem image built earlier in the workflow (from the shared
+  artifact) and run a command inside it. Avoids pulling the image from a
+  registry, so the temporary image never has to be published.
+
+inputs:
+  run:
+    description: Commands to execute inside the container.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Free Disk Space
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: true
+
+    - name: Download ecosystem image
+      uses: actions/download-artifact@v4
+      with:
+        name: ecosystem-image
+
+    - name: Load ecosystem image
+      shell: bash
+      run: docker load -i image.tar.gz
+
+    - name: Run in container
+      shell: bash
+      run: |
+        docker run --rm -i ecosystem:ci bash -s <<'ECOSYSTEM_CI_SCRIPT'
+        ${{ inputs.run }}
+        ECOSYSTEM_CI_SCRIPT

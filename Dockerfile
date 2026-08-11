@@ -1,4 +1,8 @@
-FROM ghcr.io/proteus-core/riscv-toolchain:latest
+# Base image providing the RISC-V GNU toolchain. Defaults to the image published by
+# CI; override with --build-arg TOOLCHAIN_IMAGE=... (or the docker compose "local"
+# profile) to build the toolchain from source when that image is not accessible.
+ARG TOOLCHAIN_IMAGE=ghcr.io/proteus-core/riscv-toolchain:latest
+FROM ${TOOLCHAIN_IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
