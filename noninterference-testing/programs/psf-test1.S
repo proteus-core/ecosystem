@@ -38,7 +38,7 @@ _start:
 	lw t0, finish_address
 	lw t6, (t0)	     # slow load waiting for t0, t2 should be speculatively forwarded
 	j finish		# jump over load that would otherwise cause an exception (invalid address)
-	insert_dfence	   # fence
+	insert_dfence t6 t0     # protect register t6
 	# leak(t6);
 	insert_leak t6 t1 finish2
 

@@ -5,9 +5,13 @@
 # ----  Defense insertion ----#
 # Expand into different fences
 # according to processor directive
-.macro insert_dfence
-#if defined(FULLFENCE)
+.macro insert_dfence reg_good reg_bad
+#if defined(DFENCEGOOD)
+	dfence \reg_good, \reg_good
+#elif defined(FULLFENCE)
 	fence
+#elif defined(DFENCEBAD)
+	dfence \reg_bad, \reg_bad
 #endif
 # no defence
 .endm

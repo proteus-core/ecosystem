@@ -162,6 +162,7 @@ class CPUWaveform:
             r'.*intAlus_\d+.IntAlu_src\d+',
             r'.*intAlus_\d+.out_LSU_TARGET_ADDRESS',
             r'.*intAlus_\d+.BranchUnit_..',
+            r'.*intAlus_\d+.Conditional.*',
             r'.*intAlus_\d+.value_ALU_RESULT',
             r'.*intAlus_\d+.out_ALU_RESULT',
             r'.*intAlus_\d+.out_IntAlu_src\d+',
@@ -174,7 +175,7 @@ class CPUWaveform:
         # Filter out register file signals for data
         regfile_patterns = [
             r'.*RegisterFileAccessor.regs_spinal_port\d+',
-            r'.*Core.pipeline.RegisterFileAccessor.regs\(\d+\)',
+            r'.*Core.pipeline.RegisterFileAccessor.regs.\[\d+\]',
             r'.*Core.pipeline.RegisterFileAccessor.x\d+_t\d',
             r'.*Core.pipeline.RegisterFileAccessor.x\d+_s\d_fp',
         ]

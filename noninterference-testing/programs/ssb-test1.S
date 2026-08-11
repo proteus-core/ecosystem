@@ -34,7 +34,7 @@ _start:
 	sw zero, (t0)	    # storing finish address to variable
 	lw t6, variable	# this will use a hardcoded address and be fast
 
-	insert_dfence
+	insert_dfence t6 t5
 
 	insert_leak t6 t1 finish2 # leaking the old value here
 

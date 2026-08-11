@@ -84,8 +84,8 @@ def debug(path: str, policy: str, target: str) -> None:
 
 def parse_arguments() -> argparse.Namespace:
     benchmarks = ['pht-test1', 'pht-test2', 'psf-test1', 'ssb-test1']
-    secure_defenses = ["FULLFENCE", "PROSPECT"]
-    insecure_defenses = ["NOFENCE"]
+    secure_defenses = ["FULLFENCE", "DFENCEGOOD", "PROSPECT"]
+    insecure_defenses = ["NOFENCE", "DFENCEBAD"]
     leakage_sinks = ["LEAKLOAD", "LEAKSTORE", "LEAKBR", "LEAKJMP", "LEAKDIV"]
     exp_postfixes = ["EXP1", "EXP0"]
 
