@@ -1,16 +1,19 @@
-name: Full CI tests and Docker deployment
+name: Proteus CI
 on:
   pull_request: {}
-  push:
-    branches:
-      - main
+  push: {}
 
 jobs:
-  build-docker:
-    name: Build Docker image
+  # ── Full build (PR events, push to main) ──────────────────────────
+  # Build the full image and share it as a workflow artifact, so the tests can
+  # run on it without ever publishing the temporary image to the registry.
+  build:
+    name: Build Docker image (full)
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
+    permissions:
+      contents: read
+      packages: read # to pull the internal toolchain base image
     steps:
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
@@ -25,52 +28,130 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build Docker image
+      - name: Log in to the container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
         uses: docker/build-push-action@v7
         with:
           context: .
           file: "Dockerfile"
-          tags: ecosystem:latest
-          push: false
+          tags: ecosystem:ci
+          load: true
           build-args: |
             INSTALL_EVAL_HD=true
             INSTALL_PROTEUS=true
-            INSTALL_TOOLCHAIN=true
             INSTALL_RISCV_FORMAL=true
-          outputs: type=docker,dest=/tmp/ecosystem-docker.tar
 
-      - name: Upload Docker artifact
-        uses: actions/upload-artifact@v6
+      - name: Export image
+        run: docker save ecosystem:ci | gzip > image.tar.gz
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: ecosystem-docker
-          path: /tmp/ecosystem-docker.tar
+          name: ecosystem-image
+          path: image.tar.gz
+          retention-days: 1
+          compression-level: 0 # already gzipped
 
-  ci-tests:
+  # ── Reduced build (push to non-main branches) ─────────────────────
+  # A lighter image (only the Proteus setup) shared the same way; only the
+  # reduced test subset runs on it and it is likewise never published.
+  build-reduced:
+    name: Build Docker image (reduced)
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
-    needs: build-docker
+    permissions:
+      contents: read
+      packages: read # to pull the internal toolchain base image
     steps:
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: false
-          docker-images: false
 
       - name: Check out repository
         uses: actions/checkout@v6
-
-      - name: Download Docker artifact
-        uses: actions/download-artifact@v8
         with:
-          name: ecosystem-docker
-          path: /tmp
+          submodules: 'recursive'
 
-      - name: Load Docker image
-        run: docker load --input /tmp/ecosystem-docker.tar
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-      - name: Run Newlib tests
-        uses: addnab/docker-run-action@v3
+      - name: Log in to the container registry
+        uses: docker/login-action@v4
         with:
-          image: ecosystem:latest
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: "Dockerfile"
+          tags: ecosystem:ci
+          load: true
+          build-args: |
+            INSTALL_PROTEUS=true
+
+      - name: Export image
+        run: docker save ecosystem:ci | gzip > image.tar.gz
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecosystem-image
+          path: image.tar.gz
+          retention-days: 1
+          compression-level: 0 # already gzipped
+
+  # ── Reduced tests (run on every event, against whichever image was built) ──
+  # Both builds publish the same artifact name and image tag, so these jobs do
+  # not need to know which one ran.
+
+  test-functional:
+    runs-on: ubuntu-latest
+    needs: [build, build-reduced]
+    if: always() && (needs.build.result == 'success' || needs.build-reduced.result == 'success')
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
+        with:
+          run: |
+            cd /ecosystem
+            cp simulation/build/sim-32-i simulation/build/sim && make clean -C functional-tests && make RISCV_PREFIX=riscv64-unknown-elf BUILD_CORE=0 -C functional-tests
+            cp simulation/build/sim-32-o simulation/build/sim && make clean -C functional-tests && make RISCV_PREFIX=riscv64-unknown-elf BUILD_CORE=0 -C functional-tests
+            cp simulation/build/sim-64-i simulation/build/sim && make clean -C functional-tests && make RISCV_PREFIX=riscv64-unknown-elf BUILD_CORE=0 64BIT=1 -C functional-tests
+            cp simulation/build/sim-64-o simulation/build/sim && make clean -C functional-tests && make RISCV_PREFIX=riscv64-unknown-elf BUILD_CORE=0 64BIT=1 -C functional-tests
+
+  test-noninterference:
+    runs-on: ubuntu-latest
+    needs: [build, build-reduced]
+    if: always() && (needs.build.result == 'success' || needs.build-reduced.result == 'success')
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
+        with:
+          run: |
+            . /ecosystem/waveform-analysis/.venv/bin/activate
+            cd /ecosystem/noninterference-testing/
+            make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
+            waveform-security
+
+  # ── Full-only tests (PR + main, against the full image) ───────────
+
+  test-newlib:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
+        with:
           run: |
             cd /ecosystem/newlib-bsp
             make main.bin && mv main.bin main-32.bin
@@ -80,21 +161,13 @@ jobs:
             ../simulation/build/sim-64-i main-64.bin
             ../simulation/build/sim-64-o main-64.bin
 
-      - name: Run functional tests
-        uses: addnab/docker-run-action@v3
+  test-spectreguard:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          image: ecosystem:latest
-          run: |
-            cd /ecosystem
-            cp simulation/build/sim-32-i simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 -C functional-tests
-            cp simulation/build/sim-32-o simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 -C functional-tests
-            cp simulation/build/sim-64-i simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 64BIT=1 -C functional-tests
-            cp simulation/build/sim-64-o simulation/build/sim && make clean -C functional-tests && make BUILD_CORE=0 64BIT=1 -C functional-tests
-
-      - name: Run SpectreGuard benchmarks
-        uses: addnab/docker-run-action@v3
-        with:
-          image: ecosystem:latest
           run: |
             cd /ecosystem/benchmarks/spectreguard
             make && mv specBench.bin specBench-32.bin
@@ -104,10 +177,13 @@ jobs:
             ../../simulation/build/sim-64-i specBench-64.bin
             ../../simulation/build/sim-64-o specBench-64.bin
 
-      - name: Run Embench benchmarks
-        uses: addnab/docker-run-action@v3
+  test-embench:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          image: ecosystem:latest
           run: |
             cd /ecosystem/benchmarks/embench
             make
@@ -117,63 +193,68 @@ jobs:
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-64-i
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --sim=../../simulation/build/sim-64-o
 
-      - name: Run AMI-suite benchmarks
-        uses: addnab/docker-run-action@v3
+  test-ami-suite:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          image: ecosystem:latest
           run: |
             cd /ecosystem/benchmarks/embench
             make SRC_DIR=../ami-suite
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../ami-suite --sim=../../simulation/build/sim-32-i
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../ami-suite --sim=../../simulation/build/sim-32-o
 
-      - name: Run non-interference test
-        uses: addnab/docker-run-action@v3
+  test-eval-hd:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          image: ecosystem:latest
-          run: |
-            . /ecosystem/waveform-analysis/.venv/bin/activate
-            cd /ecosystem/noninterference-testing/
-            make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
-            waveform-security
-
-      - name: Run EVAL-HD example
-        uses: addnab/docker-run-action@v3
-        with:
-          image: ecosystem:latest
           run: |
             cd /ecosystem/synthesis
             ./eval-hd.sh
 
-      - name: Run one riscv-formal test
-        uses: addnab/docker-run-action@v3
+  test-riscv-formal:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
         with:
-          image: ecosystem:latest
           run: |
             cd /ecosystem/formal-verification/riscv-formal
             make formal-insn_bgeu
 
+  # ── Publish as latest (main only, after all full tests pass) ──────
   push-image:
-    name: Push Docker image
+    name: Publish image as latest
     runs-on: ubuntu-latest
-    # only run on the main branch when build and ci-tests both succeed
-    needs: [build-docker, ci-tests]
+    needs:
+      - test-newlib
+      - test-functional
+      - test-spectreguard
+      - test-embench
+      - test-ami-suite
+      - test-noninterference
+      - test-eval-hd
+      - test-riscv-formal
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
         with:
-          tool-cache: false
-          docker-images: false
+          tool-cache: true
 
-      - name: Download Docker artifact
-        uses: actions/download-artifact@v8
+      - name: Download ecosystem image
+        uses: actions/download-artifact@v4
         with:
-          name: ecosystem-docker
-          path: /tmp
+          name: ecosystem-image
 
-      - name: Load Docker image
-        run: docker load --input /tmp/ecosystem-docker.tar
+      - name: Load ecosystem image
+        run: docker load -i image.tar.gz
 
       - name: Log in to the container registry
         uses: docker/login-action@v4
@@ -182,7 +263,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push Docker image
+      - name: Tag and push as latest
         run: |
-          docker tag ecosystem:latest ghcr.io/${{ github.repository_owner }}/ecosystem:latest
+          docker tag ecosystem:ci ghcr.io/${{ github.repository_owner }}/ecosystem:latest
           docker push ghcr.io/${{ github.repository_owner }}/ecosystem:latest
+
+  # ── Clean up the shared image artifact once everything is done ────
+  # Runs after all consumers (tests + publish) regardless of their outcome, so
+  # the multi-GB image does not linger in artifact storage after the run.
+  cleanup-artifact:
+    runs-on: ubuntu-latest
+    needs:
+      - test-newlib
+      - test-functional
+      - test-spectreguard
+      - test-embench
+      - test-ami-suite
+      - test-noninterference
+      - test-eval-hd
+      - test-riscv-formal
+      - push-image
+    if: always()
+    permissions:
+      actions: write
+    steps:
+      - name: Delete ecosystem image artifact
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: ecosystem-image
+          failOnError: false

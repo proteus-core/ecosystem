@@ -1,0 +1,16 @@
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# toolchain.sh only installs packages (it never refreshes the apt cache), so the
+# base image's empty package lists have to be populated first.
+RUN apt-get update
+
+# Build the toolchain via the shared install script so the commands live in a
+# single place. It installs into $PWD/gnu, hence the cd into /opt.
+COPY install-scripts/toolchain.sh /tmp/toolchain.sh
+RUN cd /opt && bash /tmp/toolchain.sh && rm /tmp/toolchain.sh
+
+ENV PATH=/opt/gnu/bin:$PATH
+
+CMD ["/bin/bash"]

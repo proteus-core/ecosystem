@@ -5,7 +5,7 @@ PIPELINE ?= Static
 ISA ?= RV32I
 # To instead build with a custom config file, define CONFIG=<path>
 
-BASE_DIR ?= ../core
+PROTEUS_DIR ?= ../core
 BUILD_DIR = build
 TOPLEVEL_MODULE = Core
 VERILOG_FILE_NAME = $(TOPLEVEL_MODULE).v
@@ -25,19 +25,19 @@ $(EXE_FILE): $(BUILD_DIR)/$(VERILATOR_NAME).mk main.cpp
 $(BUILD_DIR)/$(VERILATOR_NAME).mk: $(VERILOG_INPUT)
 	verilator --cc --exe --trace-fst -O3 -CFLAGS "$(CFLAGS)" -Wno-WIDTH -Wno-UNOPTFLAT -Wno-CMPCONST -Wno-UNSIGNED -Mdir $(BUILD_DIR) $(VERILOG_INPUT) main.cpp -o $(EXE_NAME)
 
-$(VERILOG_INPUT): $(BASE_DIR)/$(VERILOG_FILE_NAME)
+$(VERILOG_INPUT): $(PROTEUS_DIR)/$(VERILOG_FILE_NAME)
 	mkdir -p $(@D)
 	cp $< $@
 
-$(BASE_DIR)/$(VERILOG_FILE_NAME): FORCE
+$(PROTEUS_DIR)/$(VERILOG_FILE_NAME): FORCE
 ifeq ($(CORE),riscv.CoreExtMem)
 ifdef CONFIG
-	cd $(BASE_DIR); sbt "runMain $(CORE) $(abspath $(CONFIG))"
+	cd $(PROTEUS_DIR); sbt "runMain $(CORE) $(abspath $(CONFIG))"
 else
-	cd $(BASE_DIR); sbt "runMain $(CORE) $(PIPELINE) $(ISA)"
+	cd $(PROTEUS_DIR); sbt "runMain $(CORE) $(PIPELINE) $(ISA)"
 endif
 else
-	cd $(BASE_DIR); sbt "runMain $(CORE)"
+	cd $(PROTEUS_DIR); sbt "runMain $(CORE)"
 endif
 
 FORCE:
