@@ -6,7 +6,7 @@ BUILD_CORE ?= 1
 RISCV_PREFIX ?= riscv64-unknown-elf
 
 TESTS_DIR = $(abspath .)
-BASE_DIR = $(abspath $(TESTS_DIR)/../core)
+PROTEUS_DIR ?= $(abspath $(TESTS_DIR)/../core)
 RISCV_TESTS_DIR = $(TESTS_DIR)/riscv-tests
 ISA_TESTS_DIR = $(RISCV_TESTS_DIR)/isa
 BUILD_DIR = $(TESTS_DIR)/build
@@ -62,7 +62,7 @@ $(SIM_EXE): $(FORCE)
 .PHONY: FORCE
 
 %.pass: %.bin $(SIM_EXE)
-	cd $(BASE_DIR); $(SIM_EXE) $<
+	cd $(PROTEUS_DIR); $(SIM_EXE) $<
 	touch $@
 
 clean:
