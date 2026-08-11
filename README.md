@@ -80,7 +80,7 @@ Our [board support package](./newlib-bsp/) with standard library functions and a
 We use a Verilator-based [simulation flow](./simulation/) that can be build with `make -C simulation` from the root directory of the container. The following arguments are supported:
 
 - `CORE=...`: specify which configuration to build, e.g., `riscv.CoreExtMem` (default), `riscv.CoreFormal`, etc.
-- `BASE_DIR=...`: specify the path to the directory with the Proteus core (default: `../core`)
+- `PROTEUS_DIR=...`: specify the path to the directory with the Proteus core (default: `../core`)
 - `EXE_NAME=...`: specify the name of the output simulation file (default: `sim`)
 
 When `CORE=riscv.CoreExtMem`, you can additionally specify either the pipeline and ISA configuration with `PIPELINE` and `ISA`, or provide a fully custom configuration with `CONFIG`: (if a `CONFIG` is provided, `PIPELINE` and `ISA` are ignored)
