@@ -22,6 +22,9 @@ _start:
 setup:
 	# public_address = &public_value;
 
+	# set up ProSpeCT CSRs
+	prospect_protect_4b secret
+
 	la t0, public_value
 	la t1, public_address
 	sw t0, (t1)
@@ -44,8 +47,7 @@ condition:
 
 	# ----- BEGIN TRANSIENT BLOCK -----
 
-	# fence
-	insert_dfence
+	insert_dfence t6 t0
 
 	# leak(t6);
 	insert_leak t6 t1 condition

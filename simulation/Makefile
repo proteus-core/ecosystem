@@ -5,6 +5,11 @@ PIPELINE ?= Static
 ISA ?= RV32I
 # To instead build with a custom config file, define CONFIG=<path>
 
+# Only applicable for CORE=riscv.CoreExtMem:
+PIPELINE ?= Static
+ISA ?= RV32I
+# To instead build with a custom config file, define CONFIG=<path>
+
 PROTEUS_DIR ?= ../core
 BUILD_DIR = build
 TOPLEVEL_MODULE = Core

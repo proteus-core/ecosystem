@@ -22,6 +22,9 @@ _start:
 setup:
 	# public_address = &public_value;
 
+	# set up ProSpeCT CSRs
+	prospect_protect_4b secret
+
 	lw zero, (zero)
 	fence
 
@@ -47,8 +50,7 @@ condition:
 	# t6 = *secret;
 	lw t6, (t6)
 
-	# fence
-	insert_dfence
+	insert_dfence t6 t0
 
 	# leak(t6);
 	insert_leak t6 t1 condition
