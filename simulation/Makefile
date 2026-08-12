@@ -37,12 +37,12 @@ $(VERILOG_INPUT): $(PROTEUS_DIR)/$(VERILOG_FILE_NAME)
 $(PROTEUS_DIR)/$(VERILOG_FILE_NAME): FORCE
 ifeq ($(CORE),riscv.CoreExtMem)
 ifdef CONFIG
-	cd $(PROTEUS_DIR); sbt "runMain $(CORE) $(abspath $(CONFIG))"
+	cd $(PROTEUS_DIR); sbt shutdown; sbt -J-Xmx4G "runMain $(CORE) $(abspath $(CONFIG))"
 else
-	cd $(PROTEUS_DIR); sbt "runMain $(CORE) $(PIPELINE) $(ISA)"
+	cd $(PROTEUS_DIR); sbt shutdown; sbt -J-Xmx4G "runMain $(CORE) $(PIPELINE) $(ISA)"
 endif
 else
-	cd $(PROTEUS_DIR); sbt "runMain $(CORE)"
+	cd $(PROTEUS_DIR); sbt shutdown; sbt -J-Xmx4G "runMain $(CORE)"
 endif
 
 FORCE:

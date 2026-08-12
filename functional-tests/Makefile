@@ -34,7 +34,7 @@ ARCHFLAGS = -march=rv64im_zicsr_zifencei_zicond -mabi=lp64
 endif
 
 ALL_ISA_TESTS = $(shell find $(TEST_DIRS) -name '*.S')
-UNSUPPORTED_TESTS = %fence_i.S %breakpoint.S %ma_data.S %pmpaddr.S %instret_overflow.S %ld_st.S %sd.S %st_ld.S %ld.S
+UNSUPPORTED_TESTS = %breakpoint.S %ma_data.S %pmpaddr.S %instret_overflow.S
 ALL_TESTS = $(filter-out $(UNSUPPORTED_TESTS),$(ALL_ISA_TESTS))
 ALL_TARGETS = $(addsuffix .pass,$(basename $(addprefix $(BUILD_DIR)/,$(notdir $(ALL_TESTS)))))
 
