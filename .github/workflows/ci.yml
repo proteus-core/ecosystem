@@ -241,7 +241,17 @@ jobs:
       - test-noninterference
       - test-eval-hd
       - test-riscv-formal
-    if: github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      needs.test-newlib.result == 'success' &&
+      needs.test-functional.result == 'success' &&
+      needs.test-spectreguard.result == 'success' &&
+      needs.test-embench.result == 'success' &&
+      needs.test-ami-suite.result == 'success' &&
+      needs.test-noninterference.result == 'success' &&
+      needs.test-eval-hd.result == 'success' &&
+      needs.test-riscv-formal.result == 'success' &&
+      github.ref == 'refs/heads/main'
     steps:
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
