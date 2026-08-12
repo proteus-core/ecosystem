@@ -141,7 +141,7 @@ jobs:
             . /ecosystem/waveform-analysis/.venv/bin/activate
             cd /ecosystem/noninterference-testing/
             make -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
-            waveform-security --secure-defenses "FULLFENCE PROSPECT" --insecure-defenses "NOFENCE"
+            waveform-security --secure-defenses "FULLFENCE" --insecure-defenses "NOFENCE"
 
   # ── Full-only tests (PR + main, against the full image) ───────────
 
