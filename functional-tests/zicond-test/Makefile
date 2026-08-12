@@ -4,8 +4,8 @@ LD = $(RISCV_PREFIX)-gcc
 OBJCOPY = $(RISCV_PREFIX)-objcopy
 
 %.elf: %.s
-	$(CC) -mabi=ilp32 -march=rv32im_zicsr_zicond -c -o $@ $<
-	$(CC) -mabi=ilp32 -march=rv32im_zicsr_zicond -ffreestanding -nostdlib -T ../tests.ld -o $@ $<
+	$(CC) -mabi=ilp32 -march=rv32im_zicsr_zifencei_zicond -c -o $@ $<
+	$(CC) -mabi=ilp32 -march=rv32im_zicsr_zifencei_zicond -ffreestanding -nostdlib -T ../tests.ld -o $@ $<
 
 %.ihex: %.elf
 	$(OBJCOPY) -O ihex $< $@
