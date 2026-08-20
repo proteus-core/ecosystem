@@ -138,7 +138,7 @@ jobs:
       - uses: ./.github/actions/run-in-ecosystem
         with:
           run: |
-            . /ecosystem/waveform-analysis/.venv/bin/activate
+            . /ecosystem/.python-venv/bin/activate
             cd /ecosystem/noninterference-testing/
             make DEFENSES="FULLFENCE NOFENCE" -C programs vcd SIM_EXE=/ecosystem/simulation/build/sim-32-o
             waveform-security --secure-defenses "FULLFENCE" --insecure-defenses "NOFENCE" --compare-signals liberal
