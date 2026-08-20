@@ -231,7 +231,7 @@ jobs:
         with:
           run: |
             cd /ecosystem/benchmarks/dhrystone
-            make
+            make ../../newlib-bsp && make
             ../../simulation/build/sim-32-i build/dhrystone/dry.bin
             ../../simulation/build/sim-32-o build/dhrystone/dry.bin
             make clean && make ../../newlib-bsp && make 64BIT=1
