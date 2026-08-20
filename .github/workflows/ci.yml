@@ -222,6 +222,22 @@ jobs:
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../coremark --sim=../../simulation/build/sim-64-i
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../coremark --sim=../../simulation/build/sim-64-o
 
+  test-dhrystone:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
+        with:
+          run: |
+            cd /ecosystem/benchmarks/dhrystone
+            make
+            ../../simulation/build/sim-32-i build/dhrystone/dry.bin
+            ../../simulation/build/sim-32-o build/dhrystone/dry.bin
+            make clean && make ../../newlib-bsp && make 64BIT=1
+            ../../simulation/build/sim-64-i build/dhrystone/dry.bin
+            ../../simulation/build/sim-64-o build/dhrystone/dry.bin
+
   test-eval-hd:
     runs-on: ubuntu-latest
     needs: build
@@ -255,6 +271,7 @@ jobs:
       - test-embench
       - test-ami-suite
       - test-coremark
+      - test-dhrystone
       - test-noninterference
       - test-eval-hd
       - test-riscv-formal
@@ -266,6 +283,7 @@ jobs:
       needs.test-embench.result == 'success' &&
       needs.test-ami-suite.result == 'success' &&
       needs.test-coremark.result == 'success' &&
+      needs.test-dhrystone.result == 'success' &&
       needs.test-noninterference.result == 'success' &&
       needs.test-eval-hd.result == 'success' &&
       needs.test-riscv-formal.result == 'success' &&
