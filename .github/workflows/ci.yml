@@ -206,6 +206,22 @@ jobs:
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../ami-suite --sim=../../simulation/build/sim-32-i
             python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../ami-suite --sim=../../simulation/build/sim-32-o
 
+  test-coremark:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/run-in-ecosystem
+        with:
+          run: |
+            cd /ecosystem/benchmarks/embench
+            make SRC_DIR=../coremark
+            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../coremark --sim=../../simulation/build/sim-32-i
+            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../coremark --sim=../../simulation/build/sim-32-o
+            make SRC_DIR=../coremark clean && make SRC_DIR=../coremark 64BIT=1
+            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../coremark --sim=../../simulation/build/sim-64-i
+            python3 benchmark_speed.py --target-module=run_proteus --timeout=5400 --absolute --benchdir=../coremark --sim=../../simulation/build/sim-64-o
+
   test-eval-hd:
     runs-on: ubuntu-latest
     needs: build
@@ -238,6 +254,7 @@ jobs:
       - test-spectreguard
       - test-embench
       - test-ami-suite
+      - test-coremark
       - test-noninterference
       - test-eval-hd
       - test-riscv-formal
@@ -248,6 +265,7 @@ jobs:
       needs.test-spectreguard.result == 'success' &&
       needs.test-embench.result == 'success' &&
       needs.test-ami-suite.result == 'success' &&
+      needs.test-coremark.result == 'success' &&
       needs.test-noninterference.result == 'success' &&
       needs.test-eval-hd.result == 'success' &&
       needs.test-riscv-formal.result == 'success' &&
