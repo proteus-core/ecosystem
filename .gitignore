@@ -8,5 +8,7 @@ __pycache__
 *.o
 *.fst.hier
 
+.python-venv
+
 # Proteus core
 core
